@@ -305,7 +305,78 @@ BBD Bright, Clean, LoFi and Pitch Duck, in the "Extra" panel otherwise.
 −1.3 … +2.4 dB depending on the mode (all within ±3 dB). In the linear region
 (quiet material) the −Drive/2 rule gives +6 dB, as specified.
 
-*(Ghost Shift and the Pitch modes are documented with phase 4.)*
+### Ghost Shift
+
+Record chain (in the loop): hi-fi tape curve (bias 0.08) → fixed gap loss
+(Past 12 kHz, Present 16 kHz, Future 19 kHz) → asperity noise (Age, signal
+gated) → **single-sideband frequency shifter** → Era dispersion. Reads: Hermite
+with a subtle fixed hi-fi transport drift (0.35 Hz, ±0.15 ms).
+
+* Frequency shifter: a Hilbert transformer (two chains of four z⁻² all-pass
+  sections of the classic 90° phase-difference network; measured in tests:
+  I/Q correlation < 0.02 and equal power at 100 Hz, 1 kHz and 8 kHz) and a
+  double-precision quadrature oscillator: y = I·cos φ + Q·sin φ (upper
+  sideband for positive Hz). The shift is linear in Hz (1 kHz + 150 Hz =
+  1150 Hz, not a musical interval), so harmonics become inharmonic and each
+  repeat moves further. **Freq Shift** ±1000 Hz (cubic knob curve, most travel
+  near 0); **Freq Detune** 0–50 Hz: L shifts by shift + detune/2, R by
+  shift − detune/2 (small = subtle width, large = fast auto-pan).
+* **Era = diffusion character**: Past = standard (only the global Diffusion);
+  Present = frequency-dependent diffusion: 12 first-order all-passes with
+  negative coefficients (−0.55 … −0.85 with the Diffusion amount) delay the lows
+  more than the highs — the highs arrive first (measured +1.6 ms low-vs-high
+  spread); Future = strongly frequency dependent: 32 stages (−0.70 … −0.92;
+  measured +7.8 ms) — chirping, ghostly voices.
+* Compensation keeps the 1 kHz region on the delay grid (gap loss + Hilbert
+  path + dispersion group delay at 1 kHz).
+
+### Pitch, Pitch Duck
+
+Digital delay (DigitalColor record chain: Era filters/curves, Age = converter
+bits) whose heads read the delay line through a **granular pitch shifter**:
+two grains per head, half a window apart, Hann (sin²) windows that sum to 1;
+each grain's extra delay ramps at (1 − ratio) samples/sample and wraps every
+window W = clamp(2 × delay, 20 ms, 60 ms). Because the grains read the delay
+line itself the shifter adds **no latency**: the average extra delay (W/2) is
+subtracted from the echo time (measured: echo centroid within 2 ms of the set
+time). The first echo is shifted and every repeat is shifted again: spirals.
+Pitch Shift ±24 st (chromatic steps in the UI, fine with Shift-drag); Pitch
+Detune: L = +detune/2, R = −detune/2 cents (micro-shift doubling). Pitch Duck
+is the same algorithm with Duck in the main section.
+
+### Pitch Rich
+
+Two grain shifters per head sharing the delay time: a pitch-shifted path
+(Pitch Shift ± Detune/2) and a "lush" path (only ± Detune/2, plus a slow random
+±1.5 ms chorus drift). **Pitch Mix** (replaces Age) crossfades lush (0 %) →
+shifted (100 %) with an equal-power law. Converter at full resolution. With
+high Diffusion: shimmer reverb.
+
+### Pitch Reverse
+
+The heads play the delay line backwards in splices whose length is the head's
+**delay time**. A grain starting at delay d₀ = 2 samples moves as
+d(t) = d₀ + (1 + r)·t — backwards through the recording at r × speed, which is
+the pitch shift (r = 2^(semitones/12) ± detune). Two grains half a splice
+apart with Hann windows crossfade every splice without clicks; the splice is
+shortened if (1 + r)·T would exceed the 20 s buffer. In the loop every repeat is
+reversed (and shifted) again. Record chain: DigitalColor (Age = bits).
+
+## Era summary (what Era changes in each mode)
+
+| Mode | Past | Present | Future |
+|---|---|---|---|
+| Tape / Tape Clean / Tape NR | HF × 0.8, gap-loss Q 1.1 at short delays, bump +2 dB, hot curve | Q 0.85, +1.5 dB, tape curve | HF × 1.3, Q 0.707, +0.8 dB, gentler drive |
+| Reel HiFi | as tape (fixed 16 kHz × era) | | Clean curve |
+| BBD | dark 2.8 kHz 4th-order, noise × 1.3, triangle LFO | dark 3.8 kHz 4th-order, smoothed triangle | bright 7 kHz 2nd-order, sine LFO |
+| BBD Bright | × 0.8 bandwidth | × 1 | × 1.3, 2nd-order, softer chip curve |
+| Analog+ | 5.6 kHz | 7.6 kHz | 12 kHz, 2nd-order |
+| Digital / Pitch / Pitch Duck / Pitch Reverse / Pitch Rich | 9 kHz 4th-order + converter knee | 14 kHz 2nd-order + tanh | 19.5 kHz 2nd-order + clean curve (Digital: sine LFO) |
+| Clean | smoothed-square LFO | ramp LFO | "hump" LFO |
+| Crystal | — (Era not used) | — | — |
+| LoFi | no anti-alias filter, 8 bits | 1-pole AA, 10 bits | 4th-order AA, 12 bits |
+| Ghost Shift | standard diffusion, 12 kHz | frequency-dependent dispersion (12 stages), 16 kHz | strongly frequency-dependent (32 stages), 19 kHz |
+| Phaser DDL | 4 stages | 6 stages | 12 stages |
 
 ## 12. Real-time rules
 

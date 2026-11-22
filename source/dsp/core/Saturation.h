@@ -106,6 +106,12 @@ inline float saturate (SatCurve curve, float x) noexcept
     return x;
 }
 
+/** Human-readable curve name (documentation, debugging). */
+const char* curveName (SatCurve curve) noexcept;
+
+/** Applies a curve to a buffer in place (offline tools and tests). */
+void saturateBlock (SatCurve curve, float* data, int numSamples, float drive) noexcept;
+
 inline float dbToGain (float db) noexcept { return std::pow (10.0f, db * 0.05f); }
 inline double dbToGain (double db) noexcept { return std::pow (10.0, db * 0.05); }
 
