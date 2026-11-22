@@ -37,8 +37,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # MSVC 2022 is required; as of late 2026 windows-latest ships a newer
+          # Visual Studio only, so the job pins the image that includes VS 2022.
           - name: Windows
-            os: windows-latest
+            os: windows-2022
             generator: '-G "Visual Studio 17 2022" -A x64'
             pluginval_zip: pluginval_Windows.zip
             pluginval_bin: ./pluginval/pluginval.exe
