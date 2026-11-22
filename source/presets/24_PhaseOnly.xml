@@ -1,0 +1,13 @@
+<OrbitEchoPreset name="Phase Only" category="Modulation" version="1">
+  <PARAM id="mode" value="16"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="2"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="0"/>
+  <PARAM id="feedback" value="0"/>
+  <PARAM id="modRate" value="0.5"/>
+  <PARAM id="modDepth" value="80"/>
+  <PARAM id="res" value="40"/>
+  <PARAM id="mix" value="50"/>
+</OrbitEchoPreset>

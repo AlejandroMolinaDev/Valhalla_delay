@@ -1,0 +1,14 @@
+<OrbitEchoPreset name="Backwards Dream" category="Pitch" version="1">
+  <PARAM id="mode" value="14"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="600"/>
+  <PARAM id="pitchShift" value="0"/>
+  <PARAM id="pitchDetune" value="10"/>
+  <PARAM id="feedback" value="40"/>
+  <PARAM id="diffAmount" value="30"/>
+  <PARAM id="diffSize" value="40"/>
+  <PARAM id="mix" value="40"/>
+</OrbitEchoPreset>

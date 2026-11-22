@@ -1,0 +1,20 @@
+<OrbitEchoPreset name="Head Rhythm" category="Multi-Head" version="1">
+  <PARAM id="mode" value="0"/>
+  <PARAM id="style" value="4"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="600"/>
+  <PARAM id="feedback" value="45"/>
+  <PARAM id="spacing" value="0"/>
+  <PARAM id="tapA" value="0"/>
+  <PARAM id="tapB" value="1"/>
+  <PARAM id="tapC" value="0"/>
+  <PARAM id="tapD" value="1"/>
+  <PARAM id="quadMode" value="0"/>
+  <PARAM id="wow" value="20"/>
+  <PARAM id="flutter" value="15"/>
+  <PARAM id="age" value="25"/>
+  <PARAM id="highCut" value="6500"/>
+  <PARAM id="mix" value="32"/>
+</OrbitEchoPreset>

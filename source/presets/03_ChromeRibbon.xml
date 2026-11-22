@@ -1,0 +1,13 @@
+<OrbitEchoPreset name="Chrome Ribbon" category="Tape" version="1">
+  <PARAM id="mode" value="1"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="12"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="feedback" value="35"/>
+  <PARAM id="wow" value="15"/>
+  <PARAM id="flutter" value="10"/>
+  <PARAM id="age" value="15"/>
+  <PARAM id="highCut" value="11000"/>
+  <PARAM id="mix" value="28"/>
+</OrbitEchoPreset>

@@ -1,0 +1,13 @@
+<OrbitEchoPreset name="Psych Sweep" category="Modulation" version="1">
+  <PARAM id="mode" value="16"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="520"/>
+  <PARAM id="feedback" value="55"/>
+  <PARAM id="modRate" value="0.3"/>
+  <PARAM id="modDepth" value="70"/>
+  <PARAM id="res" value="55"/>
+  <PARAM id="mix" value="35"/>
+</OrbitEchoPreset>

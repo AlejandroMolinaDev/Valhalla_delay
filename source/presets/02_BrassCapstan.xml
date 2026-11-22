@@ -1,0 +1,15 @@
+<OrbitEchoPreset name="Brass Capstan" category="Tape" version="1">
+  <PARAM id="mode" value="0"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="0"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="450"/>
+  <PARAM id="feedback" value="55"/>
+  <PARAM id="drive" value="6"/>
+  <PARAM id="wow" value="40"/>
+  <PARAM id="flutter" value="25"/>
+  <PARAM id="age" value="50"/>
+  <PARAM id="highCut" value="5000"/>
+  <PARAM id="mix" value="30"/>
+</OrbitEchoPreset>

@@ -1,0 +1,11 @@
+<OrbitEchoPreset name="Rack Delay '84" category="Rhythmic" version="1">
+  <PARAM id="mode" value="7"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="0"/>
+  <PARAM id="syncL" value="15"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="feedback" value="40"/>
+  <PARAM id="age" value="50"/>
+  <PARAM id="modDepth" value="8"/>
+  <PARAM id="mix" value="30"/>
+</OrbitEchoPreset>

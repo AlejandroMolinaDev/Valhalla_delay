@@ -1,0 +1,14 @@
+<OrbitEchoPreset name="Phantom Voices" category="Modulation" version="1">
+  <PARAM id="mode" value="11"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="2"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="420"/>
+  <PARAM id="freqShift" value="8"/>
+  <PARAM id="freqDetune" value="3"/>
+  <PARAM id="diffAmount" value="70"/>
+  <PARAM id="diffSize" value="45"/>
+  <PARAM id="feedback" value="65"/>
+  <PARAM id="mix" value="38"/>
+</OrbitEchoPreset>

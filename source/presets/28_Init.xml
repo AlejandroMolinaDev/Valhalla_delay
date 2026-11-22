@@ -1,0 +1,7 @@
+<OrbitEchoPreset name="Init" category="Utility" version="1">
+  <PARAM id="mode" value="0"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="14"/>
+  <PARAM id="syncR" value="0"/>
+</OrbitEchoPreset>

@@ -1,0 +1,14 @@
+<OrbitEchoPreset name="Spool Echo" category="Tape" version="1">
+  <PARAM id="mode" value="0"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="320"/>
+  <PARAM id="feedback" value="40"/>
+  <PARAM id="wow" value="30"/>
+  <PARAM id="flutter" value="20"/>
+  <PARAM id="age" value="35"/>
+  <PARAM id="highCut" value="6000"/>
+  <PARAM id="mix" value="30"/>
+</OrbitEchoPreset>

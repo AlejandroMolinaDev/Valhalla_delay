@@ -1,0 +1,14 @@
+<OrbitEchoPreset name="Diffuse Hall" category="Ambient" version="1">
+  <PARAM id="mode" value="9"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="180"/>
+  <PARAM id="feedback" value="0"/>
+  <PARAM id="diffAmount" value="91"/>
+  <PARAM id="diffSize" value="70"/>
+  <PARAM id="lowCut" value="80"/>
+  <PARAM id="highCut" value="9000"/>
+  <PARAM id="mix" value="35"/>
+</OrbitEchoPreset>

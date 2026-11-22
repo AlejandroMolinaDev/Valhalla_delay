@@ -1,0 +1,12 @@
+<OrbitEchoPreset name="Clean Machine" category="Rhythmic" version="1">
+  <PARAM id="mode" value="8"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="14"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="drive" value="12"/>
+  <PARAM id="feedback" value="110"/>
+  <PARAM id="age" value="30"/>
+  <PARAM id="modDepth" value="10"/>
+  <PARAM id="mix" value="25"/>
+</OrbitEchoPreset>

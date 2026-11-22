@@ -1,0 +1,11 @@
+<OrbitEchoPreset name="Ping Dotted" category="Rhythmic" version="1">
+  <PARAM id="mode" value="7"/>
+  <PARAM id="style" value="3"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="12"/>
+  <PARAM id="syncR" value="12"/>
+  <PARAM id="feedback" value="45"/>
+  <PARAM id="age" value="10"/>
+  <PARAM id="highCut" value="9000"/>
+  <PARAM id="mix" value="30"/>
+</OrbitEchoPreset>

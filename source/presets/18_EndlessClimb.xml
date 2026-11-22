@@ -1,0 +1,13 @@
+<OrbitEchoPreset name="Endless Climb" category="Pitch" version="1">
+  <PARAM id="mode" value="12"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="300"/>
+  <PARAM id="pitchShift" value="12"/>
+  <PARAM id="pitchDetune" value="6"/>
+  <PARAM id="feedback" value="80"/>
+  <PARAM id="highCut" value="9000"/>
+  <PARAM id="mix" value="35"/>
+</OrbitEchoPreset>

@@ -1,0 +1,16 @@
+<OrbitEchoPreset name="Controlled Howl" category="Tape" version="1">
+  <PARAM id="mode" value="0"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="380"/>
+  <PARAM id="feedback" value="120"/>
+  <PARAM id="drive" value="4"/>
+  <PARAM id="wow" value="25"/>
+  <PARAM id="flutter" value="15"/>
+  <PARAM id="age" value="30"/>
+  <PARAM id="lowCut" value="120"/>
+  <PARAM id="highCut" value="4500"/>
+  <PARAM id="mix" value="30"/>
+</OrbitEchoPreset>

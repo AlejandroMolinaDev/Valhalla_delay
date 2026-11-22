@@ -1,0 +1,13 @@
+<OrbitEchoPreset name="Broken Radio" category="Lo-Fi" version="1">
+  <PARAM id="mode" value="10"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="0"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="260"/>
+  <PARAM id="feedback" value="45"/>
+  <PARAM id="age" value="75"/>
+  <PARAM id="modDepth" value="20"/>
+  <PARAM id="highCut" value="5000"/>
+  <PARAM id="mix" value="35"/>
+</OrbitEchoPreset>

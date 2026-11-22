@@ -1,0 +1,13 @@
+<OrbitEchoPreset name="Micro Doubler" category="Pitch" version="1">
+  <PARAM id="mode" value="12"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="2"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="22"/>
+  <PARAM id="pitchShift" value="0"/>
+  <PARAM id="pitchDetune" value="12"/>
+  <PARAM id="feedback" value="0"/>
+  <PARAM id="age" value="0"/>
+  <PARAM id="mix" value="45"/>
+</OrbitEchoPreset>

@@ -1,0 +1,12 @@
+<OrbitEchoPreset name="Wide Dual" category="Rhythmic" version="1">
+  <PARAM id="mode" value="7"/>
+  <PARAM id="style" value="1"/>
+  <PARAM id="era" value="2"/>
+  <PARAM id="syncL" value="11"/>
+  <PARAM id="syncR" value="12"/>
+  <PARAM id="feedback" value="30"/>
+  <PARAM id="age" value="0"/>
+  <PARAM id="modDepth" value="5"/>
+  <PARAM id="highCut" value="14000"/>
+  <PARAM id="mix" value="28"/>
+</OrbitEchoPreset>

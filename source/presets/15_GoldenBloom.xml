@@ -1,0 +1,14 @@
+<OrbitEchoPreset name="Golden Bloom" category="Ambient" version="1">
+  <PARAM id="mode" value="8"/>
+  <PARAM id="style" value="2"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="280"/>
+  <PARAM id="ratio" value="61.8"/>
+  <PARAM id="feedback" value="75"/>
+  <PARAM id="diffAmount" value="30"/>
+  <PARAM id="diffSize" value="50"/>
+  <PARAM id="age" value="20"/>
+  <PARAM id="mix" value="35"/>
+</OrbitEchoPreset>

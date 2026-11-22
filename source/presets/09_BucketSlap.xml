@@ -1,0 +1,12 @@
+<OrbitEchoPreset name="Bucket Slap" category="Analog" version="1">
+  <PARAM id="mode" value="6"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="95"/>
+  <PARAM id="feedback" value="8"/>
+  <PARAM id="modDepth" value="5"/>
+  <PARAM id="age" value="10"/>
+  <PARAM id="mix" value="35"/>
+</OrbitEchoPreset>

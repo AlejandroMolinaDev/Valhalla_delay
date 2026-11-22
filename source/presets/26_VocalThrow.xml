@@ -1,0 +1,14 @@
+<OrbitEchoPreset name="Vocal Throw" category="Vocal" version="1">
+  <PARAM id="mode" value="3"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="14"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="feedback" value="35"/>
+  <PARAM id="duck" value="60"/>
+  <PARAM id="wow" value="15"/>
+  <PARAM id="flutter" value="10"/>
+  <PARAM id="highCut" value="7000"/>
+  <PARAM id="lowCut" value="150"/>
+  <PARAM id="mix" value="30"/>
+</OrbitEchoPreset>

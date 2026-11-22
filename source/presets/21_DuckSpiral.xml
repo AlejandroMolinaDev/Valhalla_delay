@@ -1,0 +1,13 @@
+<OrbitEchoPreset name="Duck &amp; Spiral" category="Pitch" version="1">
+  <PARAM id="mode" value="15"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="14"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="pitchShift" value="-12"/>
+  <PARAM id="pitchDetune" value="10"/>
+  <PARAM id="feedback" value="70"/>
+  <PARAM id="duck" value="50"/>
+  <PARAM id="highCut" value="8000"/>
+  <PARAM id="mix" value="35"/>
+</OrbitEchoPreset>

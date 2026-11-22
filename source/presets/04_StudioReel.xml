@@ -1,0 +1,13 @@
+<OrbitEchoPreset name="Studio Reel" category="Tape" version="1">
+  <PARAM id="mode" value="2"/>
+  <PARAM id="style" value="0"/>
+  <PARAM id="era" value="2"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="250"/>
+  <PARAM id="feedback" value="30"/>
+  <PARAM id="modRate" value="0.8"/>
+  <PARAM id="modDepth" value="15"/>
+  <PARAM id="highCut" value="16000"/>
+  <PARAM id="mix" value="25"/>
+</OrbitEchoPreset>

@@ -1,0 +1,17 @@
+<OrbitEchoPreset name="Head Choir" category="Multi-Head" version="1">
+  <PARAM id="mode" value="0"/>
+  <PARAM id="style" value="4"/>
+  <PARAM id="era" value="1"/>
+  <PARAM id="syncL" value="0"/>
+  <PARAM id="syncR" value="0"/>
+  <PARAM id="delayL" value="700"/>
+  <PARAM id="feedback" value="70"/>
+  <PARAM id="spacing" value="85"/>
+  <PARAM id="quadMode" value="1"/>
+  <PARAM id="diffAmount" value="20"/>
+  <PARAM id="diffSize" value="40"/>
+  <PARAM id="wow" value="25"/>
+  <PARAM id="age" value="20"/>
+  <PARAM id="highCut" value="5500"/>
+  <PARAM id="mix" value="35"/>
+</OrbitEchoPreset>
