@@ -5,9 +5,13 @@
 namespace oe::dsp
 {
 
-/** Saturation curves used inside the feedback loop. Every curve is bounded
-    (|y| <= ~1.05), which is what keeps Feedback up to 200 % from blowing up:
-    the loop self-oscillates into the curve instead of growing without limit. */
+/** Saturation curves used inside the feedback loop.
+
+    Every curve is bounded (|y| <= ~1.05), which keeps Feedback up to 200 %
+    from blowing up: the loop self-oscillates into the curve instead of
+    growing without limit. Every curve also has a small-signal slope of exactly
+    1, so the Feedback knob means the same thing in every mode (100 % = unity
+    loop gain for quiet signals). */
 enum class SatCurve
 {
     Clean,      // very soft, high threshold (modern digital, Future era)
@@ -52,22 +56,38 @@ namespace sat
         return x < 0.0f ? -y : y;
     }
 
+    /** Slope of tanhApprox at x (for unity-gain normalisation). */
+    inline float tanhApproxSlope (float x) noexcept
+    {
+        const auto x2 = x * x;
+        const auto d = 27.0f + 9.0f * x2;
+        return (27.0f + 3.0f * x2) * (27.0f + 9.0f * x2) / (d * d) - 18.0f * x2 * (27.0f + x2) / (d * d);
+    }
+
     inline float tape (float x, float bias) noexcept
     {
         // Small DC bias before a symmetric curve -> asymmetric transfer, even harmonics.
-        return tanhApprox (x + bias) - tanhApprox (bias);
+        return (tanhApprox (x + bias) - tanhApprox (bias)) / tanhApproxSlope (bias);
+    }
+
+    /** Tape driven harder: earlier, more asymmetric compression. */
+    inline float tapeHot (float x) noexcept
+    {
+        constexpr float c = 0.8f;
+        return c * tape (x / c, 0.2f);
     }
 
     inline float bbd (float x) noexcept
     {
-        const auto y = tanhApprox (1.1f * x + 0.04f * x * x);
-        return y * 0.95f;
+        // Op-amp / chip: soft, slightly asymmetric (x|x| term), unity slope.
+        return tanhApprox (x + 0.04f * x * std::abs (x));
     }
 
     inline float thick (float x) noexcept
     {
-        const auto y = tanhApprox (1.6f * x);
-        return 0.92f * y + 0.08f * tanhApprox (4.0f * x);
+        // Earlier, denser compression (lower ceiling) with a touch of even harmonics.
+        constexpr float c = 0.75f;
+        return c * tanhApprox ((x + 0.08f * x * std::abs (x)) / c);
     }
 } // namespace sat
 
@@ -79,7 +99,7 @@ inline float saturate (SatCurve curve, float x) noexcept
         case SatCurve::Soft:      return sat::tanhApprox (x);
         case SatCurve::Converter: return sat::converter (x);
         case SatCurve::Tape:      return sat::tape (x, 0.12f);
-        case SatCurve::TapeHot:   return sat::tape (1.35f * x, 0.2f) * 0.85f;
+        case SatCurve::TapeHot:   return sat::tapeHot (x);
         case SatCurve::Bbd:       return sat::bbd (x);
         case SatCurve::Thick:     return sat::thick (x);
     }

@@ -144,7 +144,78 @@ target, which glides (no clicks).
 * Era: Past = 9 kHz 4th-order + hard converter knee; Present = 14 kHz 2nd-order
   + soft (tanh) curve; Future = 19.5 kHz 2nd-order + very clean curve, sine LFO.
 
-*(The remaining modes are documented as they are implemented in phases 2–4.)*
+### Saturation curves (all modes)
+
+Every in-loop curve is bounded and has a small-signal slope of exactly 1, so
+"Feedback 100 %" means unity loop gain for quiet signals in every mode and the
+self-oscillation above it settles into the curve. Curves: Clean, Soft (rational
+tanh), Converter (hard knee at −1 dBFS), Tape (biased tanh → even harmonics,
+normalised by the slope at the bias point), TapeHot (earlier and more
+asymmetric), Bbd (soft, x|x| asymmetry), Thick (lower ceiling, denser).
+
+### Tape family (Tape, Tape Clean, Reel HiFi, Tape NR)
+
+Record chain: (NR encode) → +6 dB HF pre-emphasis (3 kHz shelf) → tape curve
+with soft hysteresis (the "magnetisation" follows the drive faster when it grows
+— 22 kHz — than when it relaxes — 14 kHz, giving level-dependent HF
+compression) → matching de-emphasis → gap-loss low-pass → head bump → asperity
+noise → splice. Playback: wow/flutter-modulated Hermite read → (NR decode).
+
+* **Tape speed** = 150 ms / delay. The gap-loss cutoff tracks it
+  (`7.5 kHz × speed^0.6`, clamped 2.2 kHz … 0.45·fs) and the head bump moves
+  with it (`70 Hz × √speed`, 35–200 Hz): longer delays are darker, as on a
+  variable-speed tape echo. This is the "global EQ that follows the delay time",
+  in addition to Low/High Cut.
+* **Wow / flutter** (delay-linked): rate = factor / delay (wow 0.4/s, flutter
+  3/s, i.e. 1 Hz and 7.5 Hz at 400 ms; clamped 0.1–4 Hz and 2–25 Hz), depth =
+  fraction of the delay (wow 0.4 %, flutter 0.12 % at 100 %) plus a periodic
+  capstan component. The pitch wobble therefore has the same character at any
+  delay time while its rate follows the delay, like the hardware.
+* **Normalisation**: the chain is scaled so its most resonant frequency (head
+  bump, gap-loss peak) has unity gain; self-oscillation starts near 100 %
+  Feedback in every era and mid frequencies lose 1–3 dB per pass.
+* **Age**: asperity (modulation) noise — high-passed white noise multiplied by
+  the signal envelope, so it exists only under the echoes and the plugin is
+  silent in silence (FL Studio's Smart Disable can sleep). Tape adds **splices**:
+  once per loop revolution (8 × delay, 0.5–20 s) an 18 ms level dip (up to
+  −6 dB) and a short click proportional to the signal.
+* Glide ("motor inertia"): 350 ms (Reel HiFi 200 ms).
+
+| | Tape | Tape Clean | Reel HiFi | Tape NR |
+|---|---|---|---|---|
+| Gap loss @150 ms | 7.5 kHz, tracks speed | 10 kHz, tracks | 16 kHz fixed | 11.5 kHz, tracks |
+| Wow / flutter | delay-linked | delay-linked | free (Mod Rate / Depth) | delay-linked |
+| Asperity noise scale | 1 | 0.25 | 0.4 | 0.12 |
+| Splices | yes | no | no | no |
+| Extra | | finer, brighter curve (bias 0.05) | | 2:1 / 1:2 compander around the tape |
+
+Era (tape): Past = HF × 0.8, gap-loss Q 1.1 at high speed (the highs ring at
+short delays), head bump +2 dB, TapeHot curve; Present = Q 0.85, +1.5 dB, Tape
+curve; Future = HF × 1.3, Q 0.707, +0.8 dB, gentler drive (Reel HiFi: Clean
+curve).
+
+### BBD family (BBD, BBD Bright, Analog+)
+
+Record chain: input op-amp curve → anti-alias low-pass → 2:1 compressor (4 /
+60 ms) → chip clipping (in the compressed domain) → chip hiss + clock leakage
+tone (clock = 4096 stages / (2·delay)), gated by the signal. Playback, per head:
+reconstruction low-pass (same cutoff/order) → 1:2 expander (6 / 80 ms — slower
+than the encoder, so the pair breathes). The noise sits between compressor and
+expander, so it follows the signal dynamics; with high Drive the compressor
+(which sees input + feedback) pulls the recirculating echoes down — the BBD
+ducking. Modulation: LFO (Past triangle, Present smoothed triangle, Future
+sine), Mod Rate / Mod Depth. Glide 250 ms.
+
+| | Bandwidth (AA = reconstruction) | Noise | Curves |
+|---|---|---|---|
+| BBD | Past 2.8 kHz / Present 3.8 kHz (4th order), Future 7 kHz (2nd order, the "bright model") | 1 (Past 1.3) | Soft → Bbd |
+| BBD Bright | `2.6 kHz × (300 ms / delay)^0.6`, 1.6–15 kHz, × era (0.8 / 1 / 1.3): short delays bright, long ones dark | 0.8 | Bbd → Thick (Future: Soft) |
+| Analog+ | ~2× BBD: 5.6 / 7.6 / 12 kHz | 0.34 (≈ −6 dB at the output, i.e. half) | Thick → Thick |
+
+Measured at Age 100 % under a −10 dBFS tone: Tape −49 dBFS, BBD −54 dBFS,
+Reel HiFi −57 dBFS, Analog+ −60 dBFS of noise; 0 after the input stops.
+
+*(The remaining modes are documented as they are implemented in phases 3–4.)*
 
 ## 9. Real-time rules
 
