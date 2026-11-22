@@ -59,7 +59,7 @@ TEST_CASE ("[2] Decay: Feedback 50 % with silent input falls below -90 dBFS", "[
     REQUIRE (test::allFinite (s));
     const auto tailStart = s.size() - test::samplesFor (1.0, kFs);
     const auto tailPeak = std::max (test::peakAbs (s.l, tailStart), test::peakAbs (s.r, tailStart));
-    REQUIRE (test::toDb (tailPeak) < -90.0);
+    REQUIRE (test::toDb (static_cast<double> (tailPeak)) < -90.0);
 }
 
 TEST_CASE ("[3] Digital, Single, FB 0, Diffusion 0, Age 0: one echo at the exact time", "[spec][impulse]")

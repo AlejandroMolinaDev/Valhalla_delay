@@ -71,8 +71,8 @@ public:
 
     void processRecord (float& l, float& r) noexcept override
     {
-        l = crusher.process (saturate (curve, static_cast<float> (antiAlias[0].process (l))));
-        r = crusher.process (saturate (curve, static_cast<float> (antiAlias[1].process (r))));
+        l = crusher.process (saturate (curve, static_cast<float> (antiAlias[0].process (static_cast<double> (l)))));
+        r = crusher.process (saturate (curve, static_cast<float> (antiAlias[1].process (static_cast<double> (r)))));
     }
 
     double glideSeconds() const noexcept override { return 0.12; }
