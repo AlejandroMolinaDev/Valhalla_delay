@@ -14,6 +14,7 @@ include(Catch)
 # ---------------------------------------------------------------------------
 file(GLOB OE_DSP_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/dsp/*.cpp")
 add_executable(DspTests TestHelpers.h ${OE_DSP_TEST_SOURCES})
+target_include_directories(DspTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(DspTests PRIVATE OrbitEchoDSP Catch2::Catch2WithMain)
 oe_set_strict_warnings(DspTests)
 catch_discover_tests(DspTests DISCOVERY_MODE PRE_TEST)

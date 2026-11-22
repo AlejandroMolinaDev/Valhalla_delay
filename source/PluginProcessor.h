@@ -1,12 +1,19 @@
 #pragma once
 
+#include <array>
+#include <atomic>
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include "Parameters.h"
 #include "dsp/DelayEngine.h"
 
 class OrbitEchoProcessor final : public juce::AudioProcessor
 {
 public:
+    static constexpr int kDefaultEditorWidth = 900;
+    static constexpr int kDefaultEditorHeight = 480;
+
     OrbitEchoProcessor();
     ~OrbitEchoProcessor() override;
 
@@ -37,10 +44,32 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    juce::AudioProcessorValueTreeState& getState() noexcept { return apvts; }
+    oe::dsp::EngineParams currentEngineParams() const noexcept { return paramRefs.load (lastBpm.load()); }
+    double getLastBpm() const noexcept { return lastBpm.load(); }
+
+    // Editor size (saved in the plugin state, not in presets).
+    std::atomic<int> editorWidth { kDefaultEditorWidth };
+
+    // Mix Lock: loading a preset keeps the current Mix (plugin state, not preset).
+    std::atomic<bool> mixLock { false };
+
+    /** Read-only access for the visualiser / tests (audio-thread data, approximate). */
+    const oe::dsp::DelayEngine& getEngine() const noexcept { return engine; }
+
 private:
     void processInternal (juce::AudioBuffer<float>& buffer, bool bypassed);
+    double readHostBpm() noexcept;
 
+    juce::AudioProcessorValueTreeState apvts;
+    oe::params::Refs paramRefs;
     oe::dsp::DelayEngine engine;
+    std::atomic<double> lastBpm { 120.0 };
+
+    // Scratch for the mono-output case, processed in chunks (hosts may send
+    // blocks larger than announced in prepareToPlay; nothing is allocated here).
+    static constexpr int kScratchSize = 1024;
+    std::array<float, kScratchSize> scratch {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OrbitEchoProcessor)
 };

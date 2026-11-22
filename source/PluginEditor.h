@@ -1,20 +1,13 @@
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_audio_processors/juce_audio_processors.h>
 
 #include "PluginProcessor.h"
 
-class OrbitEchoEditor final : public juce::AudioProcessorEditor
+/** Temporary editor (Phase 1): JUCE's generic parameter editor. The original
+    hardware-style interface replaces it in Phase 5. */
+class OrbitEchoEditor final : public juce::GenericAudioProcessorEditor
 {
 public:
-    explicit OrbitEchoEditor (OrbitEchoProcessor&);
-    ~OrbitEchoEditor() override;
-
-    void paint (juce::Graphics&) override;
-    void resized() override;
-
-private:
-    OrbitEchoProcessor& processor;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OrbitEchoEditor)
+    explicit OrbitEchoEditor (OrbitEchoProcessor& p) : GenericAudioProcessorEditor (p) {}
 };
