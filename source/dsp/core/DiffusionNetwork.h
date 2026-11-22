@@ -27,6 +27,7 @@ class DiffusionNetwork
 {
 public:
     static constexpr int kStages = 8;
+    static constexpr int kModDecimation = 16;
 
     /** Allocates up to `maxSeconds` of total dispersion per channel. */
     void prepare (double sampleRate, double maxSeconds = 20.2);
@@ -61,6 +62,7 @@ private:
         double delay = 1.0, target = 1.0, maxDelay = 1.0;
         RandomLfo lfo { 1u };
         double modDepth = 0.0;
+        double modNow = 0.0, modStep = 0.0; // modulation evaluated every kModDecimation samples
     };
 
     float processStage (Stage& s, float x, double g) noexcept;
@@ -74,6 +76,7 @@ private:
     bool active = false;
     std::uint64_t processCount = 0;
     int clearIndex = 0;
+    int modCountdown = 0;
 };
 
 } // namespace oe::dsp

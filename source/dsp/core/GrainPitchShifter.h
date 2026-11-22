@@ -14,8 +14,8 @@ namespace oe::dsp
     Two grains per read head, half a window apart. Each grain's extra delay
     o = phase x W ramps at (1 - ratio) samples per sample, so the read point
     moves at `ratio` x real time (the pitch shift), and wraps every window;
-    a Hann (sin²) window per grain makes the two gains sum to exactly 1, so
-    the splices are click-free. The average extra delay is W / 2; the mode
+    a smooth window per grain (smoothstep of a triangle) makes the two gains
+    sum to exactly 1, so the splices are click-free. The average extra delay is W / 2; the mode
     reports it so the engine reads that much earlier and the echo stays on
     time. Ratios are set per channel (L / R detune); taps with an even index
     read the left line, odd ones the right line (all Styles). */

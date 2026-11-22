@@ -36,6 +36,8 @@ void TapeTransport::reset() noexcept
     wowLfo.reset();
     flutterLfo.reset();
     capstan.reset();
+    wowCache = {};
+    flutterCache = {};
     splicePhase = 0.37; // first splice not right at the start
     spliceGainNow = 1.0f;
     clickNow = 0.0f;
@@ -104,7 +106,8 @@ double TapeTransport::modulation (const TapLayout& t, double tapDelay) const noe
 {
     const auto offset = t.phaseOffset + 4099.37 * static_cast<double> (t.decorrelation);
     const auto pol = static_cast<double> (t.polarity);
-    auto m = wowDepth * wowLfo.value (offset) + flutterDepth * flutterLfo.value (offset * 1.7);
+    auto m = wowDepth * wowLfo.value (offset, wowCache.forOffset (offset))
+           + flutterDepth * flutterLfo.value (offset * 1.7, flutterCache.forOffset (offset * 1.7));
     if (capstanDepth > 0.0)
         m += capstanDepth * capstan.value (LfoShape::Sine, t.phaseOffset);
     return pol * std::min (std::abs (m), 0.45 * tapDelay + 1.0) * (m < 0.0 ? -1.0 : 1.0);

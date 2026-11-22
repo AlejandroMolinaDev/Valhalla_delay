@@ -40,7 +40,8 @@ void DiffusionNetwork::prepare (double sampleRate, double maxSeconds)
             if (s.buffer.size() != size)
                 s.buffer.assign (size, 0.0f);
             s.lfo.setSeed (static_cast<std::uint32_t> (101 + 17 * i + 1009 * ch));
-            s.lfo.setRate (0.21 + 0.07 * i + 0.03 * ch, fs);
+            // Advanced once every kModDecimation samples (slow drift, 0.2-0.8 Hz).
+            s.lfo.setRate (0.21 + 0.07 * i + 0.03 * ch, fs / kModDecimation);
         }
 
     gCoeff = 1.0 - std::exp (-1.0 / (0.03 * fs));
@@ -58,7 +59,9 @@ void DiffusionNetwork::reset() noexcept
             s.write = 0;
             s.delay = s.target;
             s.lfo.reset();
+            s.modNow = s.modStep = 0.0;
         }
+    modCountdown = 0;
     g = gTarget;
     mix = mixTarget;
     active = mix > 0.0;
@@ -111,8 +114,8 @@ float DiffusionNetwork::processStage (Stage& s, float x, double gain) noexcept
 {
     const auto size = static_cast<std::uint32_t> (s.buffer.size());
     s.delay += delayCoeff * (s.target - s.delay);
-    s.lfo.advance();
-    const auto d = std::clamp (s.delay + s.modDepth * s.lfo.value(), 1.0, s.maxDelay);
+    s.modNow += s.modStep;
+    const auto d = std::clamp (s.delay + s.modDepth * s.modNow, 1.0, s.maxDelay);
 
     // Fractional read of the delayed state v[n - d] (linear interpolation).
     // Exact-size buffers (no power-of-two padding) with branch wraps: less memory.
@@ -138,6 +141,17 @@ void DiffusionNetwork::process (float& l, float& r) noexcept
 
     ++processCount;
     g += gCoeff * (gTarget - g);
+
+    if (--modCountdown <= 0)
+    {
+        modCountdown = kModDecimation;
+        for (auto& ch : stages)
+            for (auto& s : ch)
+            {
+                s.lfo.advance();
+                s.modStep = (s.lfo.value() - s.modNow) / static_cast<double> (kModDecimation);
+            }
+    }
     mix = mixTarget > mix ? std::min (mixTarget, mix + mixStep) : std::max (mixTarget, mix - mixStep);
 
     auto yl = l, yr = r;

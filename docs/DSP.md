@@ -260,51 +260,6 @@ decision): Past 4 (2 notches), Present 6 (3 notches), Future 12 (6 notches) —
 verified by sweeping a sine through the plugin. With Delay 0 and Feedback 0 the
 wet signal is the phaser alone.
 
-## 9. Diffusion (all modes)
-
-Eight series Schroeder all-passes per channel on the record path (after the
-mode chain, before the Loop EQ). Stage delays are fixed fractions of the total
-(0.043 … 0.219, sum 1; the right channel detuned by ±1–3 %) and each is
-modulated by a slow random LFO (±0.2 ms + 0.2 %) so it never rings metallically.
-
-* **Amount → all-pass gain**: g = 0.866 · Amount^1.53, calibrated by measuring
-  the envelope of a diffused echo: at **68 %** (g ≈ 0.48) attack time ≈ decay
-  time (ratio 1.04–1.16 for Size 30–80 %: a bell); at **91 %** (g ≈ 0.75) the
-  echo builds up immediately and decays over hundreds of ms with no gaps
-  (continuity > 0.9, 8–10 reflections/ms) — a dense reverb with Feedback 0 %.
-* **Amount 0 %** skips the network entirely (no CPU; test 10 counts calls).
-  Turning it on/off crossfades over 30 ms.
-* **Size** sets the total dispersion relative to the shortest head delay:
-  Σd = (0.01 + 0.99·Size²) × delay, 1 ms … 20 s. Low values blur transients
-  but stay a delay; high values become reverberant.
-* **Centring**: the energy centroid of a Schroeder all-pass is exactly its
-  delay d, whatever g, so the centroid of the chain is Σd. The heads are read
-  Σd earlier (scaled by the on/off crossfade): diffused echoes stay centred on
-  the delay grid (measured within 6 %; linear interpolation slightly damps the
-  very late tail) and "barely on" (a pure delay of Σd) sounds identical to
-  "off".
-* Memory: 20 s of all-pass buffer per channel (exact sizes, no power-of-two
-  padding), allocated in `prepareToPlay`.
-
-## 10. Duck (all modes)
-
-A single global knob (the brief's superset): RMS detector on the dry input
-(5 ms window/attack, 250 ms release on the level, 15 ms gain smoothing). Wet
-reduction = Duck × clamp(0.75 × (level_dBFS + 40), 0, 24) dB; the feedback is
-reduced by a third of that. Below −40 dBFS RMS nothing is ducked. Design
-decision: ducking the feedback by the full amount would empty the loop while
-playing, so nothing could "swell back" in the gaps; a third keeps the repeats
-from piling up yet leaves material to come back (measured: −22 dB while
-playing, +6.7 dB swell once the input stops, 400 ms delay, Duck 100 %).
-Duck = 0 is an exact bypass. The knob sits in the main section for Tape NR,
-BBD Bright, Clean, LoFi and Pitch Duck, in the "Extra" panel otherwise.
-
-## 11. Drive compensation, measured (test 8)
-
-+12 dB of Drive with program material at −9 dBFS RMS changes the wet RMS by
-−1.3 … +2.4 dB depending on the mode (all within ±3 dB). In the linear region
-(quiet material) the −Drive/2 rule gives +6 dB, as specified.
-
 ### Ghost Shift
 
 Record chain (in the loop): hi-fi tape curve (bias 0.08) → fixed gap loss
@@ -334,7 +289,7 @@ with a subtle fixed hi-fi transport drift (0.35 Hz, ±0.15 ms).
 
 Digital delay (DigitalColor record chain: Era filters/curves, Age = converter
 bits) whose heads read the delay line through a **granular pitch shifter**:
-two grains per head, half a window apart, Hann (sin²) windows that sum to 1;
+two grains per head, half a window apart, smooth windows (smoothstep of a triangle) that sum to exactly 1;
 each grain's extra delay ramps at (1 − ratio) samples/sample and wraps every
 window W = clamp(2 × delay, 20 ms, 60 ms). Because the grains read the delay
 line itself the shifter adds **no latency**: the average extra delay (W/2) is
@@ -358,11 +313,11 @@ The heads play the delay line backwards in splices whose length is the head's
 **delay time**. A grain starting at delay d₀ = 2 samples moves as
 d(t) = d₀ + (1 + r)·t — backwards through the recording at r × speed, which is
 the pitch shift (r = 2^(semitones/12) ± detune). Two grains half a splice
-apart with Hann windows crossfade every splice without clicks; the splice is
+apart with the same smooth windows crossfade every splice without clicks; the splice is
 shortened if (1 + r)·T would exceed the 20 s buffer. In the loop every repeat is
 reversed (and shifted) again. Record chain: DigitalColor (Age = bits).
 
-## Era summary (what Era changes in each mode)
+## 9. Era summary (what Era changes in each mode)
 
 | Mode | Past | Present | Future |
 |---|---|---|---|
@@ -378,7 +333,74 @@ reversed (and shifted) again. Record chain: DigitalColor (Age = bits).
 | Ghost Shift | standard diffusion, 12 kHz | frequency-dependent dispersion (12 stages), 16 kHz | strongly frequency-dependent (32 stages), 19 kHz |
 | Phaser DDL | 4 stages | 6 stages | 12 stages |
 
-## 12. Real-time rules
+## 10. Diffusion (all modes)
+
+Eight series Schroeder all-passes per channel on the record path (after the
+mode chain, before the Loop EQ). Stage delays are fixed fractions of the total
+(0.043 … 0.219, sum 1; the right channel detuned by ±1–3 %) and each is
+modulated by a slow random LFO (±0.2 ms + 0.2 %) so it never rings metallically.
+
+* **Amount → all-pass gain**: g = 0.866 · Amount^1.53, calibrated by measuring
+  the envelope of a diffused echo: at **68 %** (g ≈ 0.48) attack time ≈ decay
+  time (ratio 1.04–1.16 for Size 30–80 %: a bell); at **91 %** (g ≈ 0.75) the
+  echo builds up immediately and decays over hundreds of ms with no gaps
+  (continuity > 0.9, 8–10 reflections/ms) — a dense reverb with Feedback 0 %.
+* **Amount 0 %** skips the network entirely (no CPU; test 10 counts calls).
+  Turning it on/off crossfades over 30 ms.
+* **Size** sets the total dispersion relative to the shortest head delay:
+  Σd = (0.01 + 0.99·Size²) × delay, 1 ms … 20 s. Low values blur transients
+  but stay a delay; high values become reverberant.
+* **Centring**: the energy centroid of a Schroeder all-pass is exactly its
+  delay d, whatever g, so the centroid of the chain is Σd. The heads are read
+  Σd earlier (scaled by the on/off crossfade): diffused echoes stay centred on
+  the delay grid (measured within 6 %; linear interpolation slightly damps the
+  very late tail) and "barely on" (a pure delay of Σd) sounds identical to
+  "off".
+* Memory: 20 s of all-pass buffer per channel (exact sizes, no power-of-two
+  padding), allocated in `prepareToPlay`.
+
+## 11. Duck (all modes)
+
+A single global knob (the brief's superset): RMS detector on the dry input
+(5 ms window/attack, 250 ms release on the level, 15 ms gain smoothing). Wet
+reduction = Duck × clamp(0.75 × (level_dBFS + 40), 0, 24) dB; the feedback is
+reduced by a third of that. Below −40 dBFS RMS nothing is ducked. Design
+decision: ducking the feedback by the full amount would empty the loop while
+playing, so nothing could "swell back" in the gaps; a third keeps the repeats
+from piling up yet leaves material to come back (measured: −22 dB while
+playing, +6.7 dB swell once the input stops, 400 ms delay, Duck 100 %).
+Duck = 0 is an exact bypass. The knob sits in the main section for Tape NR,
+BBD Bright, Clean, LoFi and Pitch Duck, in the "Extra" panel otherwise.
+
+## 12. Drive compensation, measured (test 8)
+
++12 dB of Drive with program material at −9 dBFS RMS changes the wet RMS by
+−1.3 … +2.4 dB depending on the mode (all within ±3 dB). In the linear region
+(quiet material) the −Drive/2 rule gives +6 dB, as specified.
+
+## 13. Performance
+
+Measured with `oe_render --bench` (48 kHz stereo, 256-sample blocks, Feedback 60 %, Duck 30 %;
+percent of one core of the CI-class x86-64 container used for development):
+
+| | Single | Quad | PingPong | Single + Diffusion 60 % |
+|---|---|---|---|---|
+| Digital / Clean / LoFi | ~0.7 % | ~1.3 % | ~0.7 % | ~1.2 % |
+| Pitch / Pitch Reverse / Pitch Duck | ~0.9 % | ~1.7 % | ~0.9 % | ~1.4 % |
+| BBD family | ~1.2 % | ~2.4 % | ~1.3 % | ~1.8 % |
+| Tape family | ~1.4 % | ~3.5 % | ~1.5 % | ~2.2 % |
+| Pitch Rich (worst case) | ~1.5 % | ~3.9 % | ~1.6 % | ~2.3 % |
+
+Optimisations that do not change the sound: diffusion modulation evaluated every 16 samples
+with linear ramps (it moves at 0.2–0.8 Hz); the Duck gain law (log/pow) evaluated every 16
+samples while the detector and the gain smoother run per sample; random-LFO sequence values
+cached per head (they change only when the read point crosses a step); grain windows are a
+smoothstep of a triangle (C¹, overlap-add to exactly 1) instead of sin²; filter coefficients
+only recomputed when their control value changes; Diffusion 0 % skips the network entirely.
+All of them are keyed to the engine's absolute sample clock, so the output stays bit-identical
+for any block segmentation.
+
+## 14. Real-time rules
 
 * No allocation, lock or I/O on the audio thread (verified by a test that
   replaces the global `operator new` and counts allocations during

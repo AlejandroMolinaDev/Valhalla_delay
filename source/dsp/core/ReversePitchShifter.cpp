@@ -2,6 +2,18 @@
 
 #include "dsp/core/Lfo.h"
 
+namespace
+{
+    /** Grain window: smoothstep of a triangle. C1-smooth, and two grains half a
+        period apart sum to exactly 1 (smoothstep(1 - x) = 1 - smoothstep(x)),
+        like a Hann window but without a sin() per grain and per sample. */
+    inline double grainWindow (double phase) noexcept
+    {
+        const auto tri = 1.0 - std::abs (2.0 * phase - 1.0);
+        return tri * tri * (3.0 - 2.0 * tri);
+    }
+} // namespace
+
 namespace oe::dsp
 {
 
@@ -29,8 +41,7 @@ float ReversePitchShifter::read (const FractionalDelayLine& line, double segment
     float out = 0.0f;
     for (const auto p : phases[t])
     {
-        const auto s = std::sin (kPi * p); // Hann (sin^2) splice window
-        out += static_cast<float> (s * s) * line.readHermite (d0 + (1.0 + r) * p * segment[t]);
+        out += static_cast<float> (grainWindow (p)) * line.readHermite (d0 + (1.0 + r) * p * segment[t]);
     }
     return out;
 }

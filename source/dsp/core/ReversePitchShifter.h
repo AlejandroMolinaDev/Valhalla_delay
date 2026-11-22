@@ -16,8 +16,8 @@ namespace oe::dsp
     length is the head's delay time. A grain starting at delay d0 moves its
     read delay as d(t) = d0 + (1 + r)·t, i.e. the read point travels backwards
     through the recorded audio at r x real time: reversal and pitch shift (r =
-    pitch ratio) in one move. Two grains half a segment apart with Hann (sin²)
-    windows (gains sum to 1) crossfade every splice without clicks. The
+    pitch ratio) in one move. Two grains half a segment apart with smooth windows
+    that sum to 1 crossfade every splice without clicks. The
     segment is shortened when (1 + r)·T would not fit in the 20 s buffer. */
 class ReversePitchShifter
 {

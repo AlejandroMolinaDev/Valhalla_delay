@@ -59,6 +59,7 @@ private:
     bool delayLinked = true;
 
     RandomLfo wowLfo, flutterLfo;
+    mutable RandomLfo::CacheSet<kMaxTaps> wowCache, flutterCache;
     Lfo capstan;                 // periodic component of wow (capstan eccentricity)
     double wowDepth = 0.0;       // samples
     double flutterDepth = 0.0;   // samples

@@ -63,7 +63,11 @@ public:
     explicit RandomModulator (std::uint32_t seed = 7u) noexcept : lfo (seed) {}
 
     void prepare (double sampleRate) noexcept { fs = sampleRate; }
-    void reset() noexcept { lfo.reset(); }
+    void reset() noexcept
+    {
+        lfo.reset();
+        cache = {};
+    }
 
     void update (double rateHz, double depthSamplesValue) noexcept
     {
@@ -79,12 +83,13 @@ public:
             return 0.0;
         // Each decorrelation index jumps far ahead in the random sequence.
         const auto offset = t.phaseOffset + 4099.37 * static_cast<double> (t.decorrelation);
-        return static_cast<double> (t.polarity) * limitModDepth (depthSamples, tapDelay) * lfo.value (offset);
+        return static_cast<double> (t.polarity) * limitModDepth (depthSamples, tapDelay) * lfo.value (offset, cache.forOffset (offset));
     }
 
 private:
     double fs = 48000.0;
     RandomLfo lfo;
+    mutable RandomLfo::CacheSet<kMaxTaps> cache;
     double depthSamples = 0.0;
 };
 

@@ -28,6 +28,8 @@ public:
         level = 0.0;
         gain = 1.0;
         fbGain = 1.0;
+        target = fbTarget = 1.0;
+        lawCountdown = 0;
     }
 
     void setAmount (float amount01) noexcept { amount = static_cast<double> (std::clamp (amount01, 0.0f, 1.0f)); }
@@ -43,7 +45,10 @@ public:
 
 private:
     double window = 0.0, attack = 0.0, release = 0.0, smooth = 0.0;
+    static constexpr int kLawInterval = 16; // dB law evaluated every 16 samples
     double meanSquare = 0.0, level = 0.0, gain = 1.0, fbGain = 1.0, amount = 0.0;
+    double target = 1.0, fbTarget = 1.0;
+    int lawCountdown = 0;
 };
 
 } // namespace oe::dsp

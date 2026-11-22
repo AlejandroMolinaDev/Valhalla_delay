@@ -21,13 +21,17 @@ float Ducker::process (float inL, float inR) noexcept
     const auto rms = std::sqrt (meanSquare);
     level += (rms > level ? attack : release) * (rms - level);
 
-    double target = 1.0, fbTarget = 1.0;
-    if (amount > 0.0)
+    if (--lawCountdown <= 0)
     {
-        const auto levelDb = 20.0 * std::log10 (level + 1.0e-9);
-        const auto reductionDb = amount * std::clamp (0.75 * (levelDb + 40.0), 0.0, 24.0);
-        target = std::pow (10.0, -reductionDb / 20.0);
-        fbTarget = std::pow (10.0, -reductionDb / 60.0); // a third of the reduction, in dB
+        lawCountdown = kLawInterval;
+        target = fbTarget = 1.0;
+        if (amount > 0.0)
+        {
+            const auto levelDb = 20.0 * std::log10 (level + 1.0e-9);
+            const auto reductionDb = amount * std::clamp (0.75 * (levelDb + 40.0), 0.0, 24.0);
+            target = std::pow (10.0, -reductionDb / 20.0);
+            fbTarget = std::pow (10.0, -reductionDb / 60.0); // a third of the reduction, in dB
+        }
     }
     gain += smooth * (target - gain);
     fbGain += smooth * (fbTarget - fbGain);
