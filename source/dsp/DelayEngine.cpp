@@ -50,6 +50,7 @@ void DelayEngine::prepare (double sampleRate)
 
     loopEq.prepare (fs);
     wetEq.prepare (fs);
+    diffusion.prepare (fs, kMaxDelaySeconds + 0.2);
     for (auto& d : dc)
         d.setup (fs, 5.0);
     limiter.prepare (fs);
@@ -75,6 +76,7 @@ void DelayEngine::reset() noexcept
 
     loopEq.reset();
     wetEq.reset();
+    diffusion.reset();
     for (auto& d : dc)
         d.reset();
     limiter.reset();
@@ -246,6 +248,16 @@ void DelayEngine::controlUpdate() noexcept
     applyStylePlan (snap);
     updateModeContext();
 
+    // Diffusion size is relative to the shortest active head delay.
+    double reference = 0.0;
+    for (int t = 0; t < plan.numTaps; ++t)
+    {
+        const auto d = plan.delay[static_cast<std::size_t> (t)];
+        if (d > 0.0 && (reference <= 0.0 || d < reference))
+            reference = d;
+    }
+    diffusion.setParameters (params.diffAmount, params.diffSize, reference, snap);
+
     loopEq.setCutoffs (static_cast<double> (params.lowCutHz), static_cast<double> (params.highCutHz), snap);
     wetEq.setCutoffs (static_cast<double> (params.lowCutHz), static_cast<double> (params.highCutHz), snap);
     ducker.setAmount (params.duck);
@@ -281,7 +293,8 @@ float DelayEngine::readHead (IModeProcessor& m, int tap, double delay) noexcept
     const auto ti = static_cast<std::size_t> (tap);
     const auto& line = lines[static_cast<std::size_t> (plan.line[ti])];
     const auto offset = m.readOffsetSamples (delay) + m.recordGroupDelaySamples()
-                      + (m.loopEqInLoop() ? loopEq.groupDelaySamples() : 0.0);
+                      + (m.loopEqInLoop() ? loopEq.groupDelaySamples() : 0.0)
+                      + diffusion.compensationSamples();
     const auto mod = m.modulationSamples (plan.layout[ti], delay);
     const auto d = std::clamp (delay + mod - offset, 0.0, maxReadDelay);
     return m.postRead (tap, m.readTap (line, d, tap));
@@ -301,6 +314,10 @@ void DelayEngine::processRecordChain (float& l, float& r) noexcept
     {
         current->processRecord (l, r);
     }
+
+    // Diffusion (skipped entirely at 0 %).
+    if (diffusion.isActive())
+        diffusion.process (l, r);
 
     // Loop EQ (in the loop for every mode except Crystal).
     const auto curIn = current->loopEqInLoop();
@@ -336,6 +353,12 @@ void DelayEngine::progressiveClear() noexcept
     for (auto& line : lines)
         next = line.clearChunk (clearPosition, kClearChunk);
     clearPosition = next;
+    if (diffusionClearPending)
+    {
+        if (diffusion.clearStep())
+            diffusionClearPending = false;
+        return;
+    }
     if (clearPosition >= lines[0].size())
     {
         clearPending = false;
@@ -428,7 +451,7 @@ void DelayEngine::process (float* left, float* right, int numSamples) noexcept
         }
 
         const auto duckGain = ducker.process (inL, inR);
-        const auto fb = feedbackS.next() * duckGain;
+        const auto fb = feedbackS.next() * ducker.getFeedbackGain();
         const auto drive = driveS.next();
 
         // --- Record path (write first: a 0 ms delay reads this very sample) --
@@ -553,6 +576,7 @@ void DelayEngine::process (float* left, float* right, int numSamples) noexcept
     {
         fullyBypassed = true;
         clearPending = true;
+        diffusionClearPending = true;
         clearPosition = 0;
     }
 }

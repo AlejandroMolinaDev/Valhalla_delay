@@ -154,7 +154,12 @@ float TapeMode::processChannel (int ch, float x) noexcept
     const auto e = env[c].process (x);
 
     if (noiseReduction)
+    {
+        // The record amplifier saturates before the NR encoder; otherwise the
+        // 2:1 encoder would hide the Drive from the tape entirely.
+        x = sat::tape (x, bias);
         x = nrEncode[c].process (x);
+    }
 
     // Pre-emphasis -> saturation (+ soft hysteresis) -> de-emphasis.
     auto y = x + kEmphasis * static_cast<float> (preEmph[c].highpass (static_cast<double> (x)));

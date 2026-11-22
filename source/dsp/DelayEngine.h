@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "dsp/Types.h"
+#include "dsp/core/DiffusionNetwork.h"
 #include "dsp/core/Ducker.h"
 #include "dsp/core/Filters.h"
 #include "dsp/core/FractionalDelayLine.h"
@@ -78,6 +79,8 @@ public:
     Mode getActiveMode() const noexcept;
     float getLastWetRms() const noexcept { return lastWetRms; }
     std::uint64_t getResetCount() const noexcept { return resetCount; }
+    std::uint64_t getDiffusionProcessCount() const noexcept { return diffusion.getProcessCount(); }
+    double getDiffusionCompensation() const noexcept { return diffusion.compensationSamples(); }
 
 private:
     struct TimeCrossfade
@@ -133,6 +136,7 @@ private:
     double glideSeconds = -1.0;
 
     LoopEQ loopEq, wetEq;
+    DiffusionNetwork diffusion;
     DcBlocker dc[2];
     SafetyLimiter limiter;
     Ducker ducker;
@@ -146,6 +150,7 @@ private:
     bool fullyBypassed = false;
     std::size_t clearPosition = 0;
     bool clearPending = false;
+    bool diffusionClearPending = false;
     bool nanDetected = false;
     std::uint64_t resetCount = 0;
     float lastWetRms = 0.0f;

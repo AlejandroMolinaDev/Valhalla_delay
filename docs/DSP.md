@@ -215,9 +215,99 @@ sine), Mod Rate / Mod Depth. Glide 250 ms.
 Measured at Age 100 % under a −10 dBFS tone: Tape −49 dBFS, BBD −54 dBFS,
 Reel HiFi −57 dBFS, Analog+ −60 dBFS of noise; 0 after the input stops.
 
-*(The remaining modes are documented as they are implemented in phases 3–4.)*
+### Clean
 
-## 9. Real-time rules
+Wide-band digital delay (Lagrange reads) whose loop element is a
+**program-dependent limiter** instead of a saturation curve: threshold −1.5 dB,
+1 ms attack, release that moves between 40 ms (transient material, high crest
+factor) and 600 ms (dense material). Drive and Feedback above 100 % can be pushed
+without distortion (THD < 3 % at Drive +24 dB, vs. > 10× more in Digital/Tape).
+**Age = bandwidth**: an in-loop 2nd-order low-pass from 20 kHz (0 %) to 1.5 kHz
+(100 %), log-spaced. **Era = deep, unusual modulation shapes** with twice the
+usual excursion (±20 ms at 100 %): Past = smoothed square (alternating
+up/down pitch), Present = ramp (slow rise, quick return), Future = asymmetric
+"hump". Duck in the main section.
+
+### Crystal
+
+Low Cut / High Cut are applied to the **wet output**, not in the loop, and the
+loop contains only a nearly colourless limiter (−1 dB threshold, 5 ms attack,
+300 ms – 1.5 s release) and the Age-controlled floating-point converter (as
+Digital). Every repeat keeps its brightness (measured: identical HF ratio on the
+1st and 5th repeat, whereas Digital loses > 50 %), and Feedback 100 % sustains a
+loop (level after 20 repeats within ±20 %). Sine modulation.
+
+### LoFi
+
+Converter clipping → (anti-alias filter, per Era) → fractional sample-and-hold
+→ linear bit crusher → 6.5 kHz band limit. **Age = rate reduction**: hold rate
+= host rate × (1/32)^Age (0 % none, 100 % 1/32 ≈ 1.5 kHz at 48 kHz). **Era =
+anti-alias filter and word length**: Past = none (raw aliasing), 8 bits;
+Present = 1-pole at the new Nyquist, 10 bits; Future = 4th-order Butterworth at
+0.45 × the new rate, 12 bits. The hold's average delay (half a hold period) is
+compensated in the echo time. Duck in the main section.
+
+### Phaser DDL
+
+Digital delay with an analog-style phaser on the record path (in the loop):
+first-order all-pass stages, break frequency swept exponentially between 180 Hz
+and 5.2 kHz, output = ½(input + all-pass chain) → notches, resonance feedback
+around the chain (**Res**, replaces Age, up to 0.85), soft curve after it. The
+two channels sweep in quadrature. **Mod Rate / Mod Depth drive the phaser LFO**
+(the read heads are not modulated); the depth shrinks as the rate rises:
+depth_eff = depth / (1 + rate / 1.5 Hz). **Era = number of stages** (design
+decision): Past 4 (2 notches), Present 6 (3 notches), Future 12 (6 notches) —
+verified by sweeping a sine through the plugin. With Delay 0 and Feedback 0 the
+wet signal is the phaser alone.
+
+## 9. Diffusion (all modes)
+
+Eight series Schroeder all-passes per channel on the record path (after the
+mode chain, before the Loop EQ). Stage delays are fixed fractions of the total
+(0.043 … 0.219, sum 1; the right channel detuned by ±1–3 %) and each is
+modulated by a slow random LFO (±0.2 ms + 0.2 %) so it never rings metallically.
+
+* **Amount → all-pass gain**: g = 0.866 · Amount^1.53, calibrated by measuring
+  the envelope of a diffused echo: at **68 %** (g ≈ 0.48) attack time ≈ decay
+  time (ratio 1.04–1.16 for Size 30–80 %: a bell); at **91 %** (g ≈ 0.75) the
+  echo builds up immediately and decays over hundreds of ms with no gaps
+  (continuity > 0.9, 8–10 reflections/ms) — a dense reverb with Feedback 0 %.
+* **Amount 0 %** skips the network entirely (no CPU; test 10 counts calls).
+  Turning it on/off crossfades over 30 ms.
+* **Size** sets the total dispersion relative to the shortest head delay:
+  Σd = (0.01 + 0.99·Size²) × delay, 1 ms … 20 s. Low values blur transients
+  but stay a delay; high values become reverberant.
+* **Centring**: the energy centroid of a Schroeder all-pass is exactly its
+  delay d, whatever g, so the centroid of the chain is Σd. The heads are read
+  Σd earlier (scaled by the on/off crossfade): diffused echoes stay centred on
+  the delay grid (measured within 6 %; linear interpolation slightly damps the
+  very late tail) and "barely on" (a pure delay of Σd) sounds identical to
+  "off".
+* Memory: 20 s of all-pass buffer per channel (exact sizes, no power-of-two
+  padding), allocated in `prepareToPlay`.
+
+## 10. Duck (all modes)
+
+A single global knob (the brief's superset): RMS detector on the dry input
+(5 ms window/attack, 250 ms release on the level, 15 ms gain smoothing). Wet
+reduction = Duck × clamp(0.75 × (level_dBFS + 40), 0, 24) dB; the feedback is
+reduced by a third of that. Below −40 dBFS RMS nothing is ducked. Design
+decision: ducking the feedback by the full amount would empty the loop while
+playing, so nothing could "swell back" in the gaps; a third keeps the repeats
+from piling up yet leaves material to come back (measured: −22 dB while
+playing, +6.7 dB swell once the input stops, 400 ms delay, Duck 100 %).
+Duck = 0 is an exact bypass. The knob sits in the main section for Tape NR,
+BBD Bright, Clean, LoFi and Pitch Duck, in the "Extra" panel otherwise.
+
+## 11. Drive compensation, measured (test 8)
+
++12 dB of Drive with program material at −9 dBFS RMS changes the wet RMS by
+−1.3 … +2.4 dB depending on the mode (all within ±3 dB). In the linear region
+(quiet material) the −Drive/2 rule gives +6 dB, as specified.
+
+*(Ghost Shift and the Pitch modes are documented with phase 4.)*
+
+## 12. Real-time rules
 
 * No allocation, lock or I/O on the audio thread (verified by a test that
   replaces the global `operator new` and counts allocations during

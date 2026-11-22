@@ -1,7 +1,11 @@
 #include "dsp/modes/ModeFactory.h"
 
 #include "dsp/modes/BBDMode.h"
+#include "dsp/modes/CleanMode.h"
+#include "dsp/modes/CrystalMode.h"
 #include "dsp/modes/DigitalMode.h"
+#include "dsp/modes/LoFiMode.h"
+#include "dsp/modes/PhaserMode.h"
 #include "dsp/modes/TapeMode.h"
 
 namespace oe::dsp
@@ -24,6 +28,11 @@ std::unique_ptr<IModeProcessor> createMode (Mode mode)
         case Mode::BBDBright:
         case Mode::AnalogPlus:
             return std::make_unique<BBDMode> (mode);
+
+        case Mode::Clean:     return std::make_unique<CleanMode>();
+        case Mode::Crystal:   return std::make_unique<CrystalMode>();
+        case Mode::LoFi:      return std::make_unique<LoFiMode>();
+        case Mode::PhaserDDL: return std::make_unique<PhaserMode>();
 
         // Modes implemented in later phases temporarily run the Digital engine.
         default:
