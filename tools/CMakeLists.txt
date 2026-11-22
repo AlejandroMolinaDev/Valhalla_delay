@@ -5,11 +5,11 @@ oe_set_strict_warnings(oe_render)
 
 # Host harness: loads the BUILT plugin binaries through JUCE's hosting code and
 # drives them the way DAWs do (FL Studio patterns first). See HostHarness.cpp.
-juce_add_console_app(oe_host_harness PRODUCT_NAME "oe_host_harness")
+# PLUGINHOST_AU makes JUCE define JUCE_PLUGINHOST_AU and link CoreAudioKit on macOS.
+juce_add_console_app(oe_host_harness PRODUCT_NAME "oe_host_harness" PLUGINHOST_AU TRUE)
 target_sources(oe_host_harness PRIVATE HostHarness.cpp)
 target_compile_definitions(oe_host_harness PRIVATE
     JUCE_PLUGINHOST_VST3=1
-    JUCE_PLUGINHOST_AU=1
     JUCE_PLUGINHOST_LADSPA=0
     JUCE_PLUGINHOST_LV2=0
     JUCE_WEB_BROWSER=0

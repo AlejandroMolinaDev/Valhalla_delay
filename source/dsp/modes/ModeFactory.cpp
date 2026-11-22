@@ -1,5 +1,7 @@
 #include "dsp/modes/ModeFactory.h"
 
+#include "dsp/modes/AnalogPlusMode.h"
+#include "dsp/modes/BBDBrightMode.h"
 #include "dsp/modes/BBDMode.h"
 #include "dsp/modes/CleanMode.h"
 #include "dsp/modes/CrystalMode.h"
@@ -11,7 +13,10 @@
 #include "dsp/modes/PitchMode.h"
 #include "dsp/modes/PitchReverseMode.h"
 #include "dsp/modes/PitchRichMode.h"
+#include "dsp/modes/ReelHiFiMode.h"
+#include "dsp/modes/TapeCleanMode.h"
 #include "dsp/modes/TapeMode.h"
+#include "dsp/modes/TapeNRMode.h"
 
 namespace oe::dsp
 {
@@ -20,13 +25,13 @@ std::unique_ptr<IModeProcessor> createMode (Mode mode)
 {
     switch (mode)
     {
-        case Mode::Tape:
-        case Mode::TapeClean:
-        case Mode::ReelHiFi:
-        case Mode::TapeNR:       return std::make_unique<TapeMode> (mode);
-        case Mode::BBD:
-        case Mode::BBDBright:
-        case Mode::AnalogPlus:   return std::make_unique<BBDMode> (mode);
+        case Mode::Tape:         return std::make_unique<TapeMode> (Mode::Tape);
+        case Mode::TapeClean:    return std::make_unique<TapeCleanMode>();
+        case Mode::ReelHiFi:     return std::make_unique<ReelHiFiMode>();
+        case Mode::TapeNR:       return std::make_unique<TapeNRMode>();
+        case Mode::BBD:          return std::make_unique<BBDMode> (Mode::BBD);
+        case Mode::BBDBright:    return std::make_unique<BBDBrightMode>();
+        case Mode::AnalogPlus:   return std::make_unique<AnalogPlusMode>();
         case Mode::Digital:      return std::make_unique<DigitalMode>();
         case Mode::Clean:        return std::make_unique<CleanMode>();
         case Mode::Crystal:      return std::make_unique<CrystalMode>();

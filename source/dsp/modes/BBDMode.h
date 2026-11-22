@@ -18,7 +18,7 @@ namespace oe::dsp
     Modulation: smoothed triangle LFO (Mod Rate / Mod Depth) -> vibrato and
     "slews". Age = chip noise level (it follows the signal dynamics through
     the compander). Era also changes the LFO shape. */
-class BBDMode final : public IModeProcessor
+class BBDMode : public IModeProcessor
 {
 public:
     explicit BBDMode (Mode variant) noexcept;

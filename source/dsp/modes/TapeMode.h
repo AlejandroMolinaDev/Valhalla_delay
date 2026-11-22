@@ -25,7 +25,7 @@ namespace oe::dsp
     hysteresis -> de-emphasis -> gap-loss low-pass (cutoff tracks the tape
     speed, i.e. 1/delay) -> head bump -> signal-modulated asperity noise ->
     splice. Playback: modulated read (wow / flutter) -> (NR decode). */
-class TapeMode final : public IModeProcessor
+class TapeMode : public IModeProcessor
 {
 public:
     explicit TapeMode (Mode variant) noexcept;
