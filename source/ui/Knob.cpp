@@ -9,6 +9,8 @@ namespace
 {
     constexpr int kNormalSensitivity = 220; // pixels for the full range
     constexpr int kFineSensitivity = 1400;
+    constexpr int kTitleHeight = 24;
+    constexpr int kValueHeight = 24;
 } // namespace
 
 KnobSlider::KnobSlider() : juce::Slider (juce::Slider::RotaryVerticalDrag, juce::Slider::TextBoxBelow)
@@ -19,7 +21,7 @@ KnobSlider::KnobSlider() : juce::Slider (juce::Slider::RotaryVerticalDrag, juce:
     setVelocityModeParameters (1.0, 1, 0.0, false);
     setTextBoxIsEditable (true);
     setScrollWheelEnabled (true);
-    setTextBoxStyle (juce::Slider::TextBoxBelow, false, 86, 18);
+    setTextBoxStyle (juce::Slider::TextBoxBelow, false, 110, kValueHeight);
 }
 
 void KnobSlider::mouseDown (const juce::MouseEvent& e)
@@ -57,20 +59,60 @@ Knob::Knob (juce::AudioProcessorValueTreeState& state, const juce::String& id, c
     setName (title);
 }
 
+void Knob::setTitle (const juce::String& t)
+{
+    if (t == title)
+        return;
+    title = t;
+    repaint();
+}
+
+void Knob::setKnobColour (juce::Colour c)
+{
+    slider.getProperties().set ("knobColour", c.toString());
+    slider.repaint();
+}
+
+void Knob::setHero (bool shouldBeHero)
+{
+    hero = shouldBeHero;
+    slider.getProperties().set ("hero", hero);
+    slider.lookAndFeelChanged(); // recreate the value box with the hero font
+    resized();
+}
+
+void Knob::setTitleDimmed (bool dimmed)
+{
+    if (dimmed == titleDimmed)
+        return;
+    titleDimmed = dimmed;
+    repaint();
+}
+
+void Knob::setProminentTitle (bool shouldBeProminent)
+{
+    prominent = shouldBeProminent;
+    repaint();
+}
+
 void Knob::resized()
 {
     auto r = getLocalBounds();
-    r.removeFromTop (15); // title
-    slider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, r.getWidth(), 17);
+    r.removeFromTop (hero ? kTitleHeight + 6 : kTitleHeight);
+    slider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, r.getWidth(), hero ? kValueHeight + 4 : kValueHeight);
     slider.setBounds (r);
 }
 
 void Knob::paint (juce::Graphics& g)
 {
     auto* lf = dynamic_cast<OrbitLookAndFeel*> (&getLookAndFeel());
-    g.setFont (lf != nullptr ? lf->font (11.5f, true) : juce::Font (juce::FontOptions (11.5f)));
-    g.setColour (isEnabled() ? colours::textDim.brighter (0.15f) : colours::textDim.darker (0.4f));
-    g.drawFittedText (title.toUpperCase(), getLocalBounds().removeFromTop (15), juce::Justification::centred, 1);
+    const auto big = hero || prominent;
+    const auto size = hero ? 24.0f : (prominent ? 20.0f : 17.0f);
+    g.setFont (lf != nullptr ? lf->font (size, big ? OrbitLookAndFeel::Weight::bold : OrbitLookAndFeel::Weight::semiBold)
+                             : juce::Font (juce::FontOptions (size)));
+    g.setColour (! isEnabled() || titleDimmed ? colours::textDim : colours::text);
+    g.drawFittedText (big ? title.toUpperCase() : title, getLocalBounds().removeFromTop (hero ? kTitleHeight + 6 : kTitleHeight),
+                      juce::Justification::centred, 1);
 }
 
 } // namespace oe::ui

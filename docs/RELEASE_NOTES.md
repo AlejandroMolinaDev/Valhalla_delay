@@ -1,4 +1,8 @@
-## Orbit Echo 1.0.0
+## Orbit Echo 1.1.0
+
+**Novedad en 1.1.0:** interfaz rediseñada en estilo plano de colores cálidos (perilla DELAY con anillos,
+secciones por color, barra de texto MODE / STYLE / ERA / PRESETS). El sonido, los parámetros y los presets
+no cambian: los proyectos guardados con 1.0.0 se abren igual.
 
 Delay estéreo multimodo (cinta, BBD, digital, pitch, frequency shift, phaser) con toda la coloración
 dentro del lazo de retroalimentación. VST3 · AU · CLAP · Standalone para Windows, macOS (universal) y Linux.

@@ -62,7 +62,7 @@ TEST_CASE ("[13] State save/restore and hidden values kept across Mode / Style c
 
     // Save -> restore into a fresh instance (as a DAW does when reopening a project).
     p.mixLock = true;
-    p.editorWidth = 1125;
+    p.editorWidth = 1400;
     juce::MemoryBlock block;
     p.getStateInformation (block);
 
@@ -75,7 +75,7 @@ TEST_CASE ("[13] State save/restore and hidden values kept across Mode / Style c
         REQUIRE (restored.at (pid) == Approx (value).margin (1e-4));
     }
     REQUIRE (q.mixLock.load());
-    REQUIRE (q.editorWidth.load() == 1125);
+    REQUIRE (q.editorWidth.load() == 1400);
 
     // Garbage / foreign state is ignored without crashing.
     const char junk[] = "not a valid state";

@@ -12,34 +12,59 @@
 
 using namespace oe;
 using oe::ui::Knob;
+using Weight = oe::ui::OrbitLookAndFeel::Weight;
 namespace id = oe::params::id;
 namespace colours = oe::ui::colours;
 
 namespace
 {
-    // Panel geometry at the base size (900 x 480).
-    const juce::Rectangle<int> kTopBar { 0, 0, 900, 46 };
-    const juce::Rectangle<int> kLeft { 12, 54, 184, 262 };
-    const juce::Rectangle<int> kExtra { 12, 324, 184, 144 };
-    const juce::Rectangle<int> kScreen { 206, 54, 682, 112 };
-    const juce::Rectangle<int> kDelay { 206, 172, 232, 146 };
-    const juce::Rectangle<int> kFeedback { 444, 172, 140, 146 };
-    const juce::Rectangle<int> kColor { 590, 172, 140, 146 };
-    const juce::Rectangle<int> kMod { 736, 172, 152, 146 };
-    const juce::Rectangle<int> kDiffusion { 206, 324, 150, 144 };
-    const juce::Rectangle<int> kEq { 362, 324, 150, 144 };
-    const juce::Rectangle<int> kDuck { 518, 324, 100, 144 };
-    const juce::Rectangle<int> kMix { 624, 324, 264, 144 };
-    const juce::Rectangle<int> kMixWide { 518, 324, 370, 144 }; // when Duck lives in "Extra"
+    // Geometry at the base size (1120 x 448).
+    constexpr int kSectionTop = 104;
+    constexpr int kSectionHeight = 268;
+    constexpr int kSectionWidth = 114;
+    constexpr int kSectionGap = 8;
+    constexpr int kFirstSectionX = 376;
+    constexpr int kKnobHeight = 112; // title + knob + value
 
-    constexpr int kKnobW = 70;
-    constexpr int kKnobH = 88;
+    const juce::Rectangle<int> kLeftColumn { 20, 102, 112, 270 };
+    const juce::Rectangle<int> kHero { 140, 98, 224, 266 };
+    const juce::Rectangle<int> kVisualiser { 372, 16, 470, 72 };
+    const juce::Rectangle<int> kBottomBar { 20, 392, 1080, 44 };
 
-    juce::Rectangle<int> slot (const juce::Rectangle<int>& section, int index, int count, int top = 22)
+    enum Section
     {
-        const auto inner = section.reduced (6, 0);
-        const auto gap = (inner.getWidth() - count * kKnobW) / (count + 1);
-        return { inner.getX() + gap + index * (kKnobW + gap), section.getY() + top, kKnobW, kKnobH };
+        timeSection,
+        feedbackSection,
+        colorSection,
+        modSection,
+        diffSection,
+        eqSection,
+        numSections
+    };
+
+    juce::Rectangle<int> sectionBounds (int index)
+    {
+        return { kFirstSectionX + index * (kSectionWidth + kSectionGap), kSectionTop, kSectionWidth, kSectionHeight };
+    }
+
+    juce::Colour sectionColour (int index)
+    {
+        static const juce::Colour* const palette[] { &colours::amberLight, &colours::amber, &colours::orange,
+                                                     &colours::orangeRed, &colours::red, &colours::crimson };
+        return *palette[index];
+    }
+
+    const char* sectionTitle (int index)
+    {
+        static const char* const titles[] { "TIME", "FEEDBACK", "COLOR", "MOD", "DIFF", "EQ" };
+        return titles[index];
+    }
+
+    /** Upper / lower knob slot of a stacked section. */
+    juce::Rectangle<int> slot (int section, int row)
+    {
+        const auto s = sectionBounds (section);
+        return { s.getX() + 2, s.getY() + 38 + row * (kKnobHeight + 4), s.getWidth() - 4, kKnobHeight };
     }
 
     const char* modeDescription (dsp::Mode m)
@@ -67,6 +92,47 @@ namespace
         }
         return "";
     }
+
+    const char* styleDescription (dsp::Style s)
+    {
+        switch (s)
+        {
+            case dsp::Style::Single:   return "One delay for both sides. Spread pulls L and R apart.";
+            case dsp::Style::Ratio:    return "R = Ratio x L. 61.8 % grows into a pseudo-reverb.";
+            case dsp::Style::Dual:     return "Two independent delays, no cross feedback.";
+            case dsp::Style::PingPong: return "L feeds R, R feeds L.";
+            case dsp::Style::Quad:     return "Four tape heads A-D.";
+        }
+        return "";
+    }
+
+    /** Small padlock toggle next to the Mix knob (Mix Lock). */
+    class LockButton final : public juce::Button
+    {
+    public:
+        LockButton() : juce::Button ("Mix Lock") { setClickingTogglesState (false); }
+
+        void paintButton (juce::Graphics& g, bool highlighted, bool) override
+        {
+            const auto r = getLocalBounds().toFloat().reduced (2.0f);
+            const auto on = getToggleState();
+            const auto colour = on ? colours::accent : (highlighted ? colours::textDim.brighter (0.3f) : colours::textDim);
+            const auto body = r.withTrimmedTop (r.getHeight() * 0.45f);
+            juce::Path shackle;
+            const auto sw = body.getWidth() * 0.62f;
+            const auto sx = body.getCentreX() - sw * 0.5f;
+            shackle.addRoundedRectangle (sx, r.getY(), sw, r.getHeight() * 0.75f, sw * 0.5f);
+            g.setColour (colour);
+            g.strokePath (shackle, juce::PathStrokeType (2.2f));
+            g.fillRoundedRectangle (body, 2.5f);
+            if (! on)
+            {
+                // Open lock: gap in the shackle.
+                g.setColour (colours::background);
+                g.fillRect (juce::Rectangle<float> (sx + sw - 3.0f, r.getY() + r.getHeight() * 0.3f, 4.0f, r.getHeight() * 0.2f));
+            }
+        }
+    };
 } // namespace
 
 // =============================================================================
@@ -74,8 +140,10 @@ class OrbitEchoEditor::Content final : public juce::Component
 {
 public:
     Content (OrbitEchoProcessor& p, juce::LookAndFeel& lnf)
-        : processor (p), state (p.getState()), presetBar (p), modeMenu (state), styleMenu (state), eraSwitch (state),
-          taps (state), visualizer (p),
+        : processor (p), state (p.getState()), presetBar (p), compareBar (p, presetBar), modeMenu (state),
+          styleMenu (state), eraSwitch (state), taps (state), visualizer (p),
+          mix (state, id::mix, "Mix", "Dry / wet balance (equal power). The padlock (Mix Lock) keeps the Mix when loading presets."),
+          duck (state, id::duck, "Duck", "Lowers the echoes (and part of the feedback) while you play; they swell back in the gaps."),
           delayMs (state, id::delayL, "Delay", "Delay time in milliseconds (0 ms - 20 s). Type a value or drag; Ctrl/Cmd-drag for fine steps."),
           delayNote (state, id::syncL, "Delay", "Delay time as a note value, synced to the host tempo (T = triplet, D = dotted)."),
           delayRMs (state, id::delayR, "Delay R", "Right delay time in milliseconds."),
@@ -91,38 +159,55 @@ public:
           res (state, id::res, "Res", "Phaser resonance."),
           wow (state, id::wow, "Wow", "Slow random tape-speed variation; its rate follows the delay time."),
           flutter (state, id::flutter, "Flutter", "Fast random tape-speed variation; its rate follows the delay time."),
-          modRate (state, id::modRate, "Mod Rate", "Modulation rate (0.01 - 10 Hz)."),
-          modDepth (state, id::modDepth, "Mod Depth", "Modulation depth: chorus / vibrato on the echoes (phaser sweep in Phaser DDL)."),
-          freqShift (state, id::freqShift, "Freq Shift", "Linear frequency shift in Hz inside the loop: each repeat moves further (not a musical interval).", true),
-          freqDetune (state, id::freqDetune, "Freq Detune", "Shift offset between left and right: small values widen, large values pan quickly."),
+          modRate (state, id::modRate, "Rate", "Modulation rate (0.01 - 10 Hz)."),
+          modDepth (state, id::modDepth, "Depth", "Modulation depth: chorus / vibrato on the echoes (phaser sweep in Phaser DDL)."),
+          freqShift (state, id::freqShift, "Shift", "Linear frequency shift in Hz inside the loop: each repeat moves further (not a musical interval).", true),
+          freqDetune (state, id::freqDetune, "Detune", "Shift offset between left and right: small values widen, large values pan quickly."),
           pitchShift (state, id::pitchShift, "Pitch", "Pitch shift inside the loop in semitones (+-24). Shift-drag or Ctrl/Cmd-drag for cents.", true),
           pitchDetune (state, id::pitchDetune, "Detune", "Left / right detune in cents (micro-shift doubling)."),
           diffAmount (state, id::diffAmount, "Amount", "Diffusion inside the loop: 68 % makes bell-shaped echoes, 91 % a dense reverb even with Feedback at 0. 0 % = off."),
           diffSize (state, id::diffSize, "Size", "Dispersion time relative to the delay: low values blur transients, high values become reverberant."),
-          lowCut (state, id::lowCut, "Low Cut", "High-pass inside the loop (10 Hz - 2 kHz): each repeat gets thinner."),
-          highCut (state, id::highCut, "High Cut", "Low-pass inside the loop (200 Hz - 20 kHz): each repeat gets darker."),
-          duckMain (state, id::duck, "Duck", "Lowers the echoes (and part of the feedback) while you play; they swell back in the gaps."),
-          duckExtra (state, id::duck, "Duck", "Lowers the echoes (and part of the feedback) while you play; they swell back in the gaps."),
-          mix (state, id::mix, "Mix", "Dry / wet balance (equal power).")
+          highCut (state, id::highCut, "HighCut", "Low-pass inside the loop (200 Hz - 20 kHz): each repeat gets darker."),
+          lowCut (state, id::lowCut, "LowCut", "High-pass inside the loop (10 Hz - 2 kHz): each repeat gets thinner.")
     {
-        for (auto* c : std::initializer_list<juce::Component*> { &presetBar, &modeMenu, &styleMenu, &eraSwitch, &taps, &visualizer, &modeInfo,
-                                                                 &syncL, &syncR, &mixLock })
+        for (auto* c : std::initializer_list<juce::Component*> { &presetBar, &compareBar, &modeMenu, &styleMenu, &eraSwitch,
+                                                                 &taps, &visualizer, &styleInfo, &syncL, &syncR, &lock })
             addAndMakeVisible (c);
         for (auto* k : allKnobs())
             addAndMakeVisible (k);
 
+        // Colours: left column and hero, then one colour per section.
+        mix.setKnobColour (colours::orange);
+        duck.setKnobColour (colours::orange);
+        mix.setProminentTitle (true);
+        duck.setProminentTitle (true);
+        delayMs.setHero (true);
+        delayNote.setHero (true);
+        for (auto* k : { &spread, &ratio, &spacing, &delayRMs, &delayRNote })
+            k->setKnobColour (sectionColour (timeSection));
+        for (auto* k : { &feedback, &width })
+            k->setKnobColour (sectionColour (feedbackSection));
+        for (auto* k : { &drive, &age, &pitchMix, &res })
+            k->setKnobColour (sectionColour (colorSection));
+        for (auto* k : { &wow, &flutter, &modRate, &modDepth, &freqShift, &freqDetune, &pitchShift, &pitchDetune })
+            k->setKnobColour (sectionColour (modSection));
+        for (auto* k : { &diffAmount, &diffSize })
+            k->setKnobColour (sectionColour (diffSection));
+        for (auto* k : { &highCut, &lowCut })
+            k->setKnobColour (sectionColour (eqSection));
+
         pitchShift.getSlider().setCoarseSnap (1.0); // semitone steps unless fine-dragging
 
-        modeInfo.setJustificationType (juce::Justification::topLeft);
-        modeInfo.setColour (juce::Label::textColourId, colours::textDim);
-        modeInfo.setMinimumHorizontalScale (1.0f);
+        styleInfo.setJustificationType (juce::Justification::centred);
+        styleInfo.setColour (juce::Label::textColourId, colours::textDim);
+        styleInfo.setMinimumHorizontalScale (1.0f);
 
         setupSyncButton (syncL, syncLAttachment, id::syncL, rememberedNoteL);
         setupSyncButton (syncR, syncRAttachment, id::syncR, rememberedNoteR);
+        syncR.getProperties().set ("accent", colours::amberLight.toString());
 
-        mixLock.setClickingTogglesState (false);
-        mixLock.setTooltip ("Mix Lock: loading presets keeps the current Mix (saved with the session, not in presets).");
-        mixLock.onClick = [this] { processor.mixLock = ! processor.mixLock.load(); refresh (true); };
+        lock.setTooltip ("Mix Lock: loading presets keeps the current Mix (saved with the session, not in presets).");
+        lock.onClick = [this] { processor.mixLock = ! processor.mixLock.load(); refresh (true); };
 
         // Set explicitly once every child exists, so all of them (and the slider
         // value boxes they create) use the panel's look and feel from the start.
@@ -134,14 +219,14 @@ public:
 
     std::vector<Knob*> allKnobs()
     {
-        return { &delayMs, &delayNote, &delayRMs, &delayRNote, &spread, &ratio, &spacing, &feedback, &width, &drive,
-                 &age, &pitchMix, &res, &wow, &flutter, &modRate, &modDepth, &freqShift, &freqDetune, &pitchShift,
-                 &pitchDetune, &diffAmount, &diffSize, &lowCut, &highCut, &duckMain, &duckExtra, &mix };
+        return { &mix, &duck, &delayMs, &delayNote, &delayRMs, &delayRNote, &spread, &ratio, &spacing, &feedback,
+                 &width, &drive, &age, &pitchMix, &res, &wow, &flutter, &modRate, &modDepth, &freqShift, &freqDetune,
+                 &pitchShift, &pitchDetune, &diffAmount, &diffSize, &highCut, &lowCut };
     }
 
     void setupSyncButton (juce::TextButton& b, std::unique_ptr<juce::ParameterAttachment>& att, const char* paramId, int& remembered)
     {
-        b.setButtonText ("Sync");
+        b.setButtonText ("SYNC");
         b.setTooltip ("Sync the delay to the host tempo (note values) or set it freely in milliseconds.");
         att = std::make_unique<juce::ParameterAttachment> (*state.getParameter (paramId), [&b] (float v)
                                                            { b.setToggleState (juce::roundToInt (v) != dsp::kSyncFree, juce::dontSendNotification); });
@@ -164,104 +249,84 @@ public:
 
     void resized() override
     {
-        presetBar.setBounds (kTopBar.reduced (12, 0));
+        // Header: title (painted), echo visualiser, version + SAVE / A / B.
+        visualizer.setBounds (kVisualiser);
+        compareBar.setBounds (900, 52, 200, 30);
 
-        modeMenu.setBounds (kLeft.getX(), kLeft.getY() + 18, kLeft.getWidth(), 34);
-        styleMenu.setBounds (kLeft.getX(), kLeft.getY() + 76, kLeft.getWidth(), 28);
-        eraSwitch.setBounds (kLeft.getX(), kLeft.getY() + 128, kLeft.getWidth(), 26);
-        taps.setBounds (kLeft.getX(), kLeft.getY() + 178, kLeft.getWidth(), 54);
-        modeInfo.setBounds (kLeft.getX() - 2, kLeft.getY() + 170, kLeft.getWidth() + 4, 88);
+        // Left column: Mix (with its lock) and Duck.
+        const auto knobH = kKnobHeight + 10;
+        mix.setBounds (kLeftColumn.getX(), kLeftColumn.getY(), kLeftColumn.getWidth(), knobH);
+        lock.setBounds (kLeftColumn.getRight() - 14, kLeftColumn.getY() + 2, 18, 20);
+        duck.setBounds (kLeftColumn.getX(), kLeftColumn.getY() + knobH + 26, kLeftColumn.getWidth(), knobH);
 
-        visualizer.setBounds (kScreen);
+        // Hero: Delay (ms or note value) and its Sync switch.
+        delayMs.setBounds (kHero);
+        delayNote.setBounds (kHero);
+        syncL.setBounds (kHero.getCentreX() - 38, kHero.getBottom() + 2, 76, 24);
 
-        // Delay section: slot 0 = Delay (L), slot 1 = Spread / Ratio / Spacing / Delay R.
-        const auto d0 = slot (kDelay, 0, 2), d1 = slot (kDelay, 1, 2);
-        delayMs.setBounds (d0);
-        delayNote.setBounds (d0);
+        // TIME: style knob on top; below, the style's extras.
+        const auto timeTop = slot (timeSection, 0), timeBottom = slot (timeSection, 1);
         for (auto* k : { &spread, &ratio, &spacing, &delayRMs, &delayRNote })
-            k->setBounds (d1);
-        syncL.setBounds (d0.getX() + 7, d0.getBottom() + 2, kKnobW - 14, 20);
-        syncR.setBounds (d1.getX() + 7, d1.getBottom() + 2, kKnobW - 14, 20);
+            k->setBounds (timeTop);
+        const auto t = sectionBounds (timeSection);
+        taps.setBounds (t.getX() + 6, timeBottom.getY() + 8, t.getWidth() - 12, 84);
+        syncR.setBounds (t.getCentreX() - 34, timeBottom.getY() + 8, 68, 24);
+        styleInfo.setBounds (t.getX() + 8, timeBottom.getY() + (twoTimes ? 40 : 6), t.getWidth() - 16, twoTimes ? 70 : 100);
 
-        feedback.setBounds (slot (kFeedback, 0, 2));
-        width.setBounds (slot (kFeedback, 1, 2));
-        drive.setBounds (slot (kColor, 0, 2));
+        feedback.setBounds (slot (feedbackSection, 0));
+        width.setBounds (slot (feedbackSection, 1));
+        drive.setBounds (slot (colorSection, 0));
         for (auto* k : { &age, &pitchMix, &res })
-            k->setBounds (slot (kColor, 1, 2));
+            k->setBounds (slot (colorSection, 1));
         for (auto* k : { &wow, &modRate, &freqShift, &pitchShift })
-            k->setBounds (slot (kMod, 0, 2));
+            k->setBounds (slot (modSection, 0));
         for (auto* k : { &flutter, &modDepth, &freqDetune, &pitchDetune })
-            k->setBounds (slot (kMod, 1, 2));
+            k->setBounds (slot (modSection, 1));
+        diffAmount.setBounds (slot (diffSection, 0));
+        diffSize.setBounds (slot (diffSection, 1));
+        highCut.setBounds (slot (eqSection, 0));
+        lowCut.setBounds (slot (eqSection, 1));
 
-        diffAmount.setBounds (slot (kDiffusion, 0, 2, 24));
-        diffSize.setBounds (slot (kDiffusion, 1, 2, 24));
-        lowCut.setBounds (slot (kEq, 0, 2, 24));
-        highCut.setBounds (slot (kEq, 1, 2, 24));
-        duckMain.setBounds (slot (kDuck, 0, 1, 24));
-        duckExtra.setBounds (slot (kExtra, 0, 1, 24).translated (0, 0));
-
-        const auto mixArea = duckInMain ? kMix : kMixWide;
-        const auto mixKnob = juce::Rectangle<int> (mixArea.getCentreX() - 95, mixArea.getY() + 20, 110, 118);
-        mix.setBounds (mixKnob);
-        mixLock.setBounds (mixKnob.getRight() + 14, kMix.getCentreY() - 12, 84, 24);
+        // Bottom bar.
+        auto bar = kBottomBar;
+        modeMenu.setBounds (bar.removeFromLeft (300));
+        styleMenu.setBounds (bar.removeFromLeft (240));
+        eraSwitch.setBounds (bar.removeFromLeft (200));
+        presetBar.setBounds (bar);
     }
 
     void paint (juce::Graphics& g) override
     {
         auto* lf = dynamic_cast<ui::OrbitLookAndFeel*> (&getLookAndFeel());
-        auto font = [lf] (float h, bool b) { return lf != nullptr ? lf->font (h, b) : juce::Font (juce::FontOptions (h)); };
+        auto font = [lf] (float h, Weight w) { return lf != nullptr ? lf->font (h, w) : juce::Font (juce::FontOptions (h)); };
 
-        g.setGradientFill (juce::ColourGradient (colours::backgroundTop, 0.0f, 0.0f, colours::background, 0.0f, 480.0f, false));
+        g.setGradientFill (juce::ColourGradient (colours::background, 560.0f, 0.0f, colours::backgroundDeep, 560.0f, 448.0f, false));
         g.fillAll();
-        // Brushed texture: very faint horizontal lines.
-        g.setColour (juce::Colours::white.withAlpha (0.012f));
-        for (int y = 0; y < 480; y += 3)
-            g.drawHorizontalLine (y, 0.0f, 900.0f);
 
-        // Top bar.
-        g.setColour (juce::Colours::black.withAlpha (0.25f));
-        g.fillRect (kTopBar);
-        g.setColour (colours::copper.withAlpha (0.55f));
-        g.fillRect (0, kTopBar.getBottom() - 2, 900, 1);
+        // Title: two-tone product name.
+        const auto titleFont = font (60.0f, Weight::bold);
+        const juce::String first ("Orbit"), second ("Echo");
+        const auto firstWidth = juce::GlyphArrangement::getStringWidth (titleFont, first);
+        g.setFont (titleFont);
+        g.setColour (colours::accent);
+        g.drawText (first, juce::Rectangle<float> (24.0f, 4.0f, firstWidth + 4.0f, 84.0f), juce::Justification::centredLeft);
+        g.setColour (colours::accentRed);
+        g.drawText (second, juce::Rectangle<float> (24.0f + firstWidth, 4.0f, 200.0f, 84.0f), juce::Justification::centredLeft);
 
-        // Left column labels.
-        g.setFont (font (11.0f, true));
-        g.setColour (colours::copper);
-        g.drawText ("MODE", kLeft.getX(), kLeft.getY(), 120, 16, juce::Justification::centredLeft);
-        g.drawText ("STYLE", kLeft.getX(), kLeft.getY() + 60, 120, 16, juce::Justification::centredLeft);
-        g.drawText ("ERA", kLeft.getX(), kLeft.getY() + 112, 120, 16, juce::Justification::centredLeft);
-        if (style == dsp::Style::Quad)
-            g.drawText ("HEADS", kLeft.getX(), kLeft.getY() + 162, 120, 16, juce::Justification::centredLeft);
+        // Version line, top right.
+        g.setFont (font (17.0f, Weight::semiBold));
+        g.setColour (colours::accent);
+        g.drawText ("Version " JucePlugin_VersionString, 860, 14, 240, 26, juce::Justification::centredRight);
 
-        auto section = [&] (const juce::Rectangle<int>& r, const juce::String& title, bool highlighted)
+        // Section frames.
+        for (int i = 0; i < numSections; ++i)
         {
-            const auto rf = r.toFloat();
-            g.setGradientFill (juce::ColourGradient (colours::panel.brighter (0.04f), 0.0f, rf.getY(), colours::panel.darker (0.12f), 0.0f, rf.getBottom(), false));
-            g.fillRoundedRectangle (rf, 7.0f);
-            g.setColour (colours::panelEdge);
-            g.drawRoundedRectangle (rf.reduced (0.5f), 7.0f, 1.0f);
-            g.setColour (juce::Colours::white.withAlpha (0.04f));
-            g.drawHorizontalLine (r.getY() + 1, rf.getX() + 6.0f, rf.getRight() - 6.0f);
-            g.setFont (font (11.0f, true));
-            g.setColour (highlighted ? colours::amber : colours::copper);
-            g.drawText (title, r.getX() + 10, r.getY() + 4, r.getWidth() - 20, 15, juce::Justification::centredLeft);
-        };
-
-        section (kDelay, "DELAY", false);
-        section (kFeedback, "FEEDBACK / WIDTH", false);
-        section (kColor, "COLOR", false);
-        section (kMod, modTitle, false);
-        section (kDiffusion, "DIFFUSION", false);
-        section (kEq, "EQ", false);
-        if (duckInMain)
-            section (kDuck, "DUCK", true);
-        section (duckInMain ? kMix : kMixWide, "MIX", false);
-        section (kExtra, "EXTRA", false);
-        if (duckInMain)
-        {
-            g.setFont (font (11.5f, false));
-            g.setColour (colours::textDim);
-            g.drawFittedText ("Duck is in the main panel for this mode.", kExtra.reduced (14, 30), juce::Justification::centred, 3);
+            const auto r = sectionBounds (i).toFloat();
+            g.setColour (sectionColour (i));
+            g.drawRoundedRectangle (r.reduced (1.5f), 14.0f, 3.0f);
+            g.setFont (font (20.0f, Weight::bold));
+            g.setColour (colours::text);
+            g.drawText (sectionTitle (i), r.withHeight (36.0f).translated (0.0f, 4.0f), juce::Justification::centred);
         }
     }
 
@@ -273,7 +338,7 @@ public:
         const auto syncOnL = juce::roundToInt (state.getRawParameterValue (id::syncL)->load()) != dsp::kSyncFree;
         const auto syncOnR = juce::roundToInt (state.getRawParameterValue (id::syncR)->load()) != dsp::kSyncFree;
         const auto changed = newMode != mode || newStyle != style || syncOnL != lastSyncL || syncOnR != lastSyncR || ! initialised;
-        mixLock.setToggleState (processor.mixLock.load(), juce::dontSendNotification);
+        lock.setToggleState (processor.mixLock.load(), juce::dontSendNotification);
         if (! changed)
             return;
 
@@ -282,21 +347,20 @@ public:
         lastSyncL = syncOnL;
         lastSyncR = syncOnR;
         initialised = true;
-        duckInMain = params::duckIsInMainSection (mode);
-
-        const auto twoTimes = style == dsp::Style::Dual || style == dsp::Style::PingPong;
+        twoTimes = style == dsp::Style::Dual || style == dsp::Style::PingPong;
         const auto quad = style == dsp::Style::Quad;
+
         delayMs.setTitle (twoTimes ? "Delay L" : "Delay");
         delayNote.setTitle (twoTimes ? "Delay L" : "Delay");
-        modeInfo.setText (modeDescription (mode), juce::dontSendNotification);
-        modeInfo.setFont (juce::Font (juce::FontOptions (12.5f)));
+        modeMenu.setTooltip (juce::String ("Mode: ") + modeDescription (mode) + " Click to choose another algorithm.");
+        styleInfo.setText (styleDescription (style), juce::dontSendNotification);
+        styleInfo.setFont (juce::Font (juce::FontOptions (13.5f)));
 
-        const auto controls = dsp::modeControls (mode);
-        modTitle = (controls & dsp::ctl::Wow) != 0         ? "MOD / TRANSPORT"
-                 : (controls & dsp::ctl::FreqShift) != 0   ? "MOD / FREQ SHIFT"
-                 : (controls & dsp::ctl::PitchShift) != 0  ? "MOD / PITCH"
-                 : mode == dsp::Mode::PhaserDDL            ? "MOD / PHASER LFO"
-                                                           : "MOD";
+        // Duck: main control for the modes that feature it, "extra" otherwise.
+        const auto duckMain = params::duckIsInMainSection (mode);
+        duck.setTitle (duckMain ? "Duck" : "Extra: Duck");
+        duck.setTitleDimmed (! duckMain);
+        duck.setKnobColour (duckMain ? colours::orange : colours::textDim.withMultipliedBrightness (0.7f));
 
         show (delayMs, ! syncOnL, animate);
         show (delayNote, syncOnL, animate);
@@ -307,14 +371,12 @@ public:
         show (ratio, style == dsp::Style::Ratio, animate);
         show (spacing, quad, animate);
         show (taps, quad, animate);
-        show (modeInfo, ! quad, animate);
+        show (styleInfo, ! quad, animate);
 
         for (auto* k : { &age, &pitchMix, &res, &wow, &flutter, &modRate, &modDepth, &freqShift, &freqDetune, &pitchShift, &pitchDetune })
             show (*k, params::isVisible (k->getParamId(), mode, style), animate);
 
-        show (duckMain, duckInMain, animate);
-        show (duckExtra, ! duckInMain, animate);
-        resized(); // the Mix section widens when Duck is not in the main panel
+        resized();
         repaint();
     }
 
@@ -358,25 +420,26 @@ private:
     juce::AudioProcessorValueTreeState& state;
 
     ui::PresetBar presetBar;
+    ui::CompareBar compareBar;
     ui::ModeMenu modeMenu;
     ui::StyleMenu styleMenu;
     ui::EraSwitch eraSwitch;
     ui::TapButtons taps;
     ui::EchoVisualizer visualizer;
-    juce::Label modeInfo;
+    juce::Label styleInfo;
 
-    Knob delayMs, delayNote, delayRMs, delayRNote, spread, ratio, spacing, feedback, width, drive, age, pitchMix, res,
-        wow, flutter, modRate, modDepth, freqShift, freqDetune, pitchShift, pitchDetune, diffAmount, diffSize, lowCut,
-        highCut, duckMain, duckExtra, mix;
+    Knob mix, duck, delayMs, delayNote, delayRMs, delayRNote, spread, ratio, spacing, feedback, width, drive, age,
+        pitchMix, res, wow, flutter, modRate, modDepth, freqShift, freqDetune, pitchShift, pitchDetune, diffAmount,
+        diffSize, highCut, lowCut;
 
-    juce::TextButton syncL, syncR, mixLock { "Mix Lock" };
+    juce::TextButton syncL, syncR;
+    LockButton lock;
     std::unique_ptr<juce::ParameterAttachment> syncLAttachment, syncRAttachment;
     int rememberedNoteL = dsp::kSyncQuarter, rememberedNoteR = dsp::kSyncQuarter;
 
     dsp::Mode mode = dsp::Mode::Tape;
     dsp::Style style = dsp::Style::Single;
-    bool lastSyncL = false, lastSyncR = false, initialised = false, duckInMain = false;
-    juce::String modTitle { "MOD" };
+    bool lastSyncL = false, lastSyncR = false, initialised = false, twoTimes = false;
 };
 
 // =============================================================================
@@ -408,7 +471,7 @@ OrbitEchoEditor::~OrbitEchoEditor()
 
 void OrbitEchoEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (colours::background);
+    g.fillAll (colours::backgroundDeep);
 }
 
 void OrbitEchoEditor::resized()

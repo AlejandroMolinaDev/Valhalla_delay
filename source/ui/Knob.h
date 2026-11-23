@@ -30,6 +30,7 @@ private:
     bool fineDrag = false;
 };
 
+/** A titled knob: label above, flat knob, value below. */
 class Knob final : public juce::Component
 {
 public:
@@ -41,12 +42,25 @@ public:
 
     KnobSlider& getSlider() noexcept { return slider; }
     const juce::String& getParamId() const noexcept { return paramId; }
-    void setTitle (const juce::String& t) { title = t; repaint(); }
+    void setTitle (const juce::String& t);
+
+    /** Flat colour of the knob (usually its section colour). */
+    void setKnobColour (juce::Colour c);
+
+    /** The large ringed main knob (Delay). */
+    void setHero (bool shouldBeHero);
+
+    /** Dimmed title (e.g. Duck when it lives in the "extra" slot). */
+    void setTitleDimmed (bool dimmed);
+
+    /** Larger upper-case title (left column knobs). */
+    void setProminentTitle (bool prominent);
 
 private:
     juce::String paramId, title;
     KnobSlider slider;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
+    bool hero = false, titleDimmed = false, prominent = false;
 };
 
 } // namespace oe::ui

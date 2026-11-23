@@ -12,7 +12,7 @@ principal de pruebas.
 - Delay de **0 ms a 20 s**, sincronizable (1/64 … 4 compases, tresillos y con puntillo).
 - Feedback hasta **200 %** con auto-oscilación controlada; nunca supera −0.3 dBFS.
 - **Latencia 0**, CPU baja (≈ 0,7–4 % de un núcleo por instancia a 48 kHz), salida idéntica con cualquier tamaño de bloque.
-- Interfaz original redimensionable (75–200 %), visualizador de ecos, **28 presets** de fábrica, presets de usuario, A/B y Mix Lock.
+- Interfaz plana de colores cálidos, redimensionable (75–200 %): perilla DELAY con anillos, secciones por color, barra MODE / STYLE / ERA / PRESETS, visualizador de ecos, **28 presets** de fábrica, presets de usuario, A/B y Mix Lock.
 
 ---
 
@@ -152,6 +152,13 @@ Phaser DDL: 4/6/12 etapas). Tabla completa en [`docs/DSP.md`](docs/DSP.md).
 | **Duck** | 0–100 % | Baja los ecos mientras tocas y los deja volver en los silencios. |
 | **Mix** + **Mix Lock** | 0–100 % | Mezcla equal-power. Con el candado, cargar presets no cambia el Mix. |
 
+**Interfaz:** a la izquierda MIX (con el candado de Mix Lock) y DUCK; en el centro la perilla
+**DELAY** con su botón SYNC; después las secciones TIME (control propio de cada Style: Spread, Ratio,
+Spacing + cabezales A–D o Delay R), FEEDBACK (Feedback, Width), COLOR (Drive, Age / Pitch Mix / Res),
+MOD, DIFF y EQ. Abajo, **MODE**, **STYLE**, **ERA** y **PRESETS** son texto: haz clic para elegir.
+Arriba, el visualizador de ecos, SAVE y A/B. Duck se pinta en color en los modos que lo destacan
+(Tape NR, BBD Bright, Clean, LoFi, Pitch Duck) y en gris como control "extra" en los demás.
+
 **Interacción:** arrastre vertical; **Ctrl/Cmd + arrastre** (o Shift) = ajuste fino; doble clic = valor
 por defecto; rueda del ratón; clic en el valor para escribirlo (`350 ms`, `1.2 s`, `8k`…); tooltips.
 *Pitch* avanza por semitonos y en ajuste fino por centésimas.
@@ -229,7 +236,7 @@ obtén el AAX SDK y una cuenta de firma PACE, añade `juce_set_aax_sdk_path(<rut
 Orbit Echo se distribuye bajo **GNU AGPL-3.0** (ver `LICENSE`) porque usa **JUCE 8**, que es AGPLv3
 o comercial. **Distribuirlo comercialmente con código cerrado requiere una licencia comercial de
 JUCE.** El soporte CLAP viene de [free-audio/clap-juce-extensions](https://github.com/free-audio/clap-juce-extensions)
-(MIT). Tipografía: *Chakra Petch* (SIL Open Font License 1.1, ver `assets/fonts/OFL.txt`).
+(MIT). Tipografía: *Poppins* (SIL Open Font License 1.1, ver `assets/fonts/OFL.txt`).
 
 Orbit Echo es un diseño original: su nombre, interfaz, presets y código no están afiliados a ningún
 otro producto.

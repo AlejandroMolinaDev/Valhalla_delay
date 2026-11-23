@@ -16,8 +16,8 @@ class OrbitEchoProcessor final : public juce::AudioProcessor,
                                  private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    static constexpr int kDefaultEditorWidth = 900;
-    static constexpr int kDefaultEditorHeight = 480;
+    static constexpr int kDefaultEditorWidth = 1120;
+    static constexpr int kDefaultEditorHeight = 448;
 
     OrbitEchoProcessor();
     ~OrbitEchoProcessor() override;

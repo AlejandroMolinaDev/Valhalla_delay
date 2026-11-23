@@ -15,7 +15,7 @@ Lo que **solo se puede confirmar a mano** en cada DAW está abajo. Lleva 10–15
 Preparación: instala según el README y haz *Options → Manage plugins → Find installed plugins*.
 
 - [ ] **Escaneo:** *Orbit Echo* aparece como efecto (fabricante *Alejandro Audio*) en VST3 (y en CLAP con FL 2024+; en Mac también AU). Sin avisos en el log del escaneo.
-- [ ] **Carga** en una ranura del Mixer; la ventana abre a 900×480 y se puede redimensionar desde la esquina (75–200 %). Con escalado de Windows al 125/150 % se ve nítida y proporcionada.
+- [ ] **Carga** en una ranura del Mixer; la ventana abre a 1120×448 y se puede redimensionar desde la esquina (75–200 %). Con escalado de Windows al 125/150 % se ve nítida y proporcionada.
 - [ ] **Audio:** con un loop sonando, cambia Mode, Style y Era: sin clicks ni silencios.
 - [ ] **Sync:** pon *Sync* en 1/4 y cambia el tempo del proyecto: los ecos siguen el tempo y deslizan sin cortes.
 - [ ] **Automatización:** clic derecho en un control → *Create automation clip*; reproduce: el control se mueve. *Browse parameters* muestra nombres claros (Delay, Feedback, Mode…) y valores con unidades.

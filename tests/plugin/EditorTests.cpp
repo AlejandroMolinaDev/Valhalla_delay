@@ -31,34 +31,34 @@ TEST_CASE ("Editor opens, scales 75-200 % with a fixed aspect ratio and remember
     {
         std::unique_ptr<juce::AudioProcessorEditor> ed (p.createEditorAndMakeActive());
         REQUIRE (ed != nullptr);
-        REQUIRE (ed->getWidth() == 900);
-        REQUIRE (ed->getHeight() == 480);
+        REQUIRE (ed->getWidth() == 1120);
+        REQUIRE (ed->getHeight() == 448);
         REQUIRE (ed->isResizable());
 
         for (const auto scale : { 0.75, 1.0, 1.5, 2.0 })
         {
-            const auto w = juce::roundToInt (900 * scale);
-            ed->setSize (w, juce::roundToInt (480 * scale));
+            const auto w = juce::roundToInt (1120 * scale);
+            ed->setSize (w, juce::roundToInt (448 * scale));
             REQUIRE (ed->getWidth() == w);
         }
         auto* c = ed->getConstrainer();
         REQUIRE (c != nullptr);
-        REQUIRE (c->getFixedAspectRatio() == 900.0 / 480.0);
-        REQUIRE (c->getMinimumWidth() == 675);
-        REQUIRE (c->getMaximumWidth() == 1800);
+        REQUIRE (c->getFixedAspectRatio() == 1120.0 / 448.0);
+        REQUIRE (c->getMinimumWidth() == 840);
+        REQUIRE (c->getMaximumWidth() == 2240);
 
-        ed->setSize (1350, 720);
+        ed->setSize (1680, 672);
     }
-    REQUIRE (p.editorWidth.load() == 1350);
+    REQUIRE (p.editorWidth.load() == 1680);
 
     // Saved in the plugin state and restored.
     juce::MemoryBlock block;
     p.getStateInformation (block);
     OrbitEchoProcessor q;
     q.setStateInformation (block.getData(), static_cast<int> (block.getSize()));
-    REQUIRE (q.editorWidth.load() == 1350);
+    REQUIRE (q.editorWidth.load() == 1680);
     std::unique_ptr<juce::AudioProcessorEditor> ed2 (q.createEditorAndMakeActive());
-    REQUIRE (ed2->getWidth() == 1350);
+    REQUIRE (ed2->getWidth() == 1680);
 }
 
 TEST_CASE ("Editor shows only the controls of the current Mode x Style", "[ui]")
@@ -139,7 +139,7 @@ TEST_CASE ("Editor snapshots for visual review", "[ui][snapshot]")
         }
         snapshot (ed, s.name);
     }
-    ed.setSize (675, 360);
+    ed.setSize (840, 336);
     snapshot (ed, "scale75");
     SUCCEED();
 }

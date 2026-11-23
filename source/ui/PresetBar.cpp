@@ -7,28 +7,30 @@
 namespace oe::ui
 {
 
-PresetBar::PresetBar (OrbitEchoProcessor& p) : processor (p), presets (p.getPresetManager())
+namespace
+{
+    constexpr int kArrowSize = 18;
+
+    juce::Font barFont (juce::Component& c, OrbitLookAndFeel::Weight w)
+    {
+        if (auto* lf = dynamic_cast<OrbitLookAndFeel*> (&c.getLookAndFeel()))
+            return lf->font (21.0f, w);
+        return juce::Font (juce::FontOptions (21.0f));
+    }
+} // namespace
+
+// =============================================================================
+PresetBar::PresetBar (OrbitEchoProcessor& p) : presets (p.getPresetManager())
 {
     prev.setTooltip ("Previous preset");
     next.setTooltip ("Next preset");
-    name.setTooltip ("Presets by category");
-    save.setTooltip ("Save the current settings as a user preset");
-    a.setTooltip ("A/B compare: settings A");
-    b.setTooltip ("A/B compare: settings B (starts as a copy of A)");
-    lock.setTooltip ("Mix Lock: loading presets keeps the current Mix (saved with the session, not in presets)");
-
-    prev.onClick = [this] { presets.loadPrevious(); refresh(); };
-    next.onClick = [this] { presets.loadNext(); refresh(); };
-    name.onClick = [this] { showPresetMenu(); };
-    save.onClick = [this] { showSaveDialog(); };
-    a.onClick = [this] { presets.selectA(); refresh(); };
-    b.onClick = [this] { presets.selectB(); refresh(); };
-    lock.onClick = [this] { processor.mixLock = ! processor.mixLock.load(); refresh(); };
-
-    for (auto* c : { &prev, &next, &name, &save, &a, &b, &lock })
-        addAndMakeVisible (*c);
-
-    refresh();
+    prev.onClick = [this] { presets.loadPrevious(); timerCallback(); };
+    next.onClick = [this] { presets.loadNext(); timerCallback(); };
+    addAndMakeVisible (prev);
+    addAndMakeVisible (next);
+    setTooltip ("Presets by category; Save stores your own.");
+    setMouseCursor (juce::MouseCursor::PointingHandCursor);
+    timerCallback();
     startTimerHz (8);
 }
 
@@ -36,18 +38,48 @@ PresetBar::~PresetBar() = default;
 
 void PresetBar::timerCallback()
 {
-    refresh();
-}
-
-void PresetBar::refresh()
-{
     auto text = presets.getCurrentName();
     if (presets.isModified())
         text << " *";
-    name.setButtonText (text);
-    a.setToggleState (! presets.isOnB(), juce::dontSendNotification);
-    b.setToggleState (presets.isOnB(), juce::dontSendNotification);
-    lock.setToggleState (processor.mixLock.load(), juce::dontSendNotification);
+    if (text != shownName)
+    {
+        shownName = text;
+        repaint();
+    }
+}
+
+juce::Rectangle<int> PresetBar::nameArea() const
+{
+    return getLocalBounds().withTrimmedRight (2 * kArrowSize + 20);
+}
+
+void PresetBar::paint (juce::Graphics& g)
+{
+    const auto labelFont = barFont (*this, OrbitLookAndFeel::Weight::bold);
+    const juce::String label ("PRESETS: ");
+    const auto labelWidth = juce::GlyphArrangement::getStringWidthInt (labelFont, label);
+    auto area = nameArea();
+
+    g.setFont (labelFont);
+    g.setColour (colours::text);
+    g.drawText (label, area.removeFromLeft (labelWidth), juce::Justification::centredLeft);
+    g.setFont (barFont (*this, OrbitLookAndFeel::Weight::semiBold));
+    g.setColour (isMouseOver() ? colours::accent.brighter (0.25f) : colours::accent);
+    g.drawText (shownName, area, juce::Justification::centredLeft, true);
+}
+
+void PresetBar::resized()
+{
+    auto r = getLocalBounds();
+    const auto y = (r.getHeight() - kArrowSize) / 2;
+    next.setBounds (r.getRight() - kArrowSize, y, kArrowSize, kArrowSize);
+    prev.setBounds (r.getRight() - 2 * kArrowSize - 8, y, kArrowSize, kArrowSize);
+}
+
+void PresetBar::mouseUp (const juce::MouseEvent& e)
+{
+    if (nameArea().contains (e.getPosition()))
+        showPresetMenu();
 }
 
 void PresetBar::showPresetMenu()
@@ -66,7 +98,7 @@ void PresetBar::showPresetMenu()
     menu.addItem (10001, "Rescan user presets");
 
     juce::Component::SafePointer<PresetBar> safe (this);
-    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&name), [safe] (int result)
+    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this), [safe] (int result)
     {
         if (safe == nullptr || result == 0)
             return;
@@ -76,14 +108,14 @@ void PresetBar::showPresetMenu()
             safe->presets.rescanUserPresets();
         else
             safe->presets.loadPreset (result - 1);
-        safe->refresh();
+        safe->timerCallback();
     });
 }
 
 void PresetBar::showSaveDialog()
 {
     saveWindow = std::make_unique<juce::AlertWindow> ("Save preset", "Name of the new user preset:", juce::MessageBoxIconType::NoIcon, this);
-    saveWindow->addTextEditor ("name", presets.getCurrentName().upToFirstOccurrenceOf (" *", false, false));
+    saveWindow->addTextEditor ("name", presets.getCurrentName());
     saveWindow->addButton ("Save", 1, juce::KeyPress (juce::KeyPress::returnKey));
     saveWindow->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
     saveWindow->setLookAndFeel (&getLookAndFeel());
@@ -102,48 +134,41 @@ void PresetBar::showSaveDialog()
                                                             + PresetManager::getUserPresetFolder().getFullPathName());
         }
         safe->saveWindow.reset();
-        safe->refresh();
+        safe->timerCallback();
     }), false);
 }
 
-void PresetBar::paint (juce::Graphics& g)
+// =============================================================================
+CompareBar::CompareBar (OrbitEchoProcessor& p, PresetBar& presetBar) : presets (p.getPresetManager())
 {
-    auto* lf = dynamic_cast<OrbitLookAndFeel*> (&getLookAndFeel());
-    auto r = getLocalBounds().toFloat();
-
-    // Orbit glyph: an ellipse with a satellite dot.
-    const auto glyph = juce::Rectangle<float> (34.0f, 22.0f).withCentre ({ 30.0f, r.getCentreY() });
-    g.setColour (colours::copper);
-    g.drawEllipse (glyph, 1.8f);
-    g.setColour (colours::amber);
-    g.fillEllipse (juce::Rectangle<float> (7.0f, 7.0f).withCentre ({ glyph.getRight() - 4.0f, glyph.getY() + 5.0f }));
-    g.fillEllipse (juce::Rectangle<float> (4.0f, 4.0f).withCentre (glyph.getCentre()));
-
-    g.setColour (colours::text);
-    g.setFont (lf != nullptr ? lf->font (21.0f, true) : juce::Font (juce::FontOptions (21.0f)));
-    g.drawText ("ORBIT ECHO", juce::Rectangle<float> (54.0f, 0.0f, 160.0f, r.getHeight()), juce::Justification::centredLeft);
-    g.setColour (colours::textDim);
-    g.setFont (lf != nullptr ? lf->font (10.5f) : juce::Font (juce::FontOptions (10.5f)));
-    g.drawText ("MULTIMODE DELAY", juce::Rectangle<float> (178.0f, 2.0f, 110.0f, r.getHeight()), juce::Justification::centredLeft);
+    save.setTooltip ("Save the current settings as a user preset");
+    a.setTooltip ("A/B compare: settings A");
+    b.setTooltip ("A/B compare: settings B (starts as a copy of A)");
+    save.onClick = [&presetBar] { presetBar.showSaveDialog(); };
+    a.onClick = [this] { presets.selectA(); timerCallback(); };
+    b.onClick = [this] { presets.selectB(); timerCallback(); };
+    for (auto* c : { &save, &a, &b })
+        addAndMakeVisible (*c);
+    timerCallback();
+    startTimerHz (8);
 }
 
-void PresetBar::resized()
-{
-    auto r = getLocalBounds().reduced (0, 8);
-    r.removeFromLeft (290);
-    prev.setBounds (r.removeFromLeft (28));
-    r.removeFromLeft (4);
-    name.setBounds (r.removeFromLeft (236));
-    r.removeFromLeft (4);
-    next.setBounds (r.removeFromLeft (28));
-    r.removeFromLeft (8);
-    save.setBounds (r.removeFromLeft (56));
+CompareBar::~CompareBar() = default;
 
-    lock.setBounds (r.removeFromRight (96));
-    r.removeFromRight (18);
-    b.setBounds (r.removeFromRight (32));
-    r.removeFromRight (4);
-    a.setBounds (r.removeFromRight (32));
+void CompareBar::timerCallback()
+{
+    a.setToggleState (! presets.isOnB(), juce::dontSendNotification);
+    b.setToggleState (presets.isOnB(), juce::dontSendNotification);
+}
+
+void CompareBar::resized()
+{
+    auto r = getLocalBounds();
+    b.setBounds (r.removeFromRight (34));
+    r.removeFromRight (6);
+    a.setBounds (r.removeFromRight (34));
+    r.removeFromRight (12);
+    save.setBounds (r.removeFromRight (70));
 }
 
 } // namespace oe::ui

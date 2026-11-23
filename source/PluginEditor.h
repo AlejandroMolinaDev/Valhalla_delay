@@ -5,9 +5,10 @@
 #include "PluginProcessor.h"
 #include "ui/LookAndFeel.h"
 
-/** Original "imaginary hardware echo unit" interface.
+/** Flat, warm-coloured interface: a large ringed Delay knob, colour-coded
+    sections, and a text bar for Mode / Style / Era / Presets.
 
-    The whole panel is laid out at a base size of 900 x 480 and scaled as one
+    The whole panel is laid out at a base size of 1120 x 448 and scaled as one
     piece (75 %-200 %, fixed aspect ratio, size remembered in the plugin
     state), so every host — including FL Studio's wrapper with Windows display
     scaling — shows it crisp and proportioned. Controls that do not apply to
